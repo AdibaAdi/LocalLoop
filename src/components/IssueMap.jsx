@@ -2,70 +2,51 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { doc, increment, runTransaction } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
+const L = window.L
+if (L?.Icon?.Default) {
+  delete L.Icon.Default.prototype._getIconUrl
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  })
+}
+
 const SEVERITY_COLORS = { Critical: '#ef4444', Medium: '#f97316', Low: '#22c55e' }
 
 const markerHtml = (color) => `<div class="issue-pin" style="--marker:${color}"></div>`
 const hotZoneHtml = (count) => `<div class="hot-zone">🔥 Hot Zone <span>${count}</span></div>`
 
-function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIssueId }) {
+function MapContainer({ validIssues, hotZones, onSelectIssue, focusIssueId }) {
   const mapRef = useRef(null)
-  const containerRef = useRef(null)
+  const mapNodeRef = useRef(null)
   const markersLayerRef = useRef(null)
-  const [optimisticVotes, setOptimisticVotes] = useState({})
-
-  const validIssues = useMemo(
-    () => issues.filter((issue) => typeof issue.location?.lat === 'number' && typeof issue.location?.lng === 'number'),
-    [issues]
-  )
-
-  const hotZones = useMemo(() => {
-    const groups = validIssues.reduce((acc, issue) => {
-      const key = `${issue.location.lat.toFixed(3)}:${issue.location.lng.toFixed(3)}`
-      const group = acc.get(key) || { lat: issue.location.lat, lng: issue.location.lng, issues: [] }
-      group.issues.push(issue)
-      acc.set(key, group)
-      return acc
-    }, new Map())
-
-    return [...groups.values()].filter((zone) => zone.issues.length >= 3)
-  }, [validIssues])
 
   useEffect(() => {
-    if (!containerRef.current || !window.L || mapRef.current) return
+    if (!mapNodeRef.current || !window.L || mapRef.current) return
 
-    window.L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    })
-
-    const map = window.L.map(containerRef.current, { zoomControl: false }).setView([41.8358, -87.6277], 14)
+    const map = window.L.map(mapNodeRef.current, { zoomControl: false }).setView([41.8358, -87.6277], 14)
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        ({ coords }) => {
-          map.setView([coords.latitude, coords.longitude], 13)
-        },
+        ({ coords }) => map.setView([coords.latitude, coords.longitude], 13),
         () => {},
         { enableHighAccuracy: true, timeout: 10000 }
       )
     }
+
     window.L.control.zoom({ position: 'bottomright' }).addTo(map)
     window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map)
+
     markersLayerRef.current = window.L.layerGroup().addTo(map)
     mapRef.current = map
     setTimeout(() => map.invalidateSize(), 0)
 
     return () => map.remove()
   }, [])
-
-  useEffect(() => {
-    if (!mapRef.current) return
-    mapRef.current.invalidateSize()
-  }, [validIssues.length])
 
   useEffect(() => {
     if (!mapRef.current || !validIssues.length || !window.L) return
@@ -103,6 +84,37 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
     })
   }, [validIssues, hotZones, onSelectIssue])
 
+  return <div ref={mapNodeRef} style={{ height: '100%', width: '100%' }} />
+}
+
+function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIssueId }) {
+  const containerRef = useRef(null)
+  const [isContainerReady, setIsContainerReady] = useState(false)
+  const [optimisticVotes, setOptimisticVotes] = useState({})
+
+  const validIssues = useMemo(
+    () => issues.filter((issue) => typeof issue.location?.lat === 'number' && typeof issue.location?.lng === 'number'),
+    [issues]
+  )
+
+  const hotZones = useMemo(() => {
+    const groups = validIssues.reduce((acc, issue) => {
+      const key = `${issue.location.lat.toFixed(3)}:${issue.location.lng.toFixed(3)}`
+      const group = acc.get(key) || { lat: issue.location.lat, lng: issue.location.lng, issues: [] }
+      group.issues.push(issue)
+      acc.set(key, group)
+      return acc
+    }, new Map())
+
+    return [...groups.values()].filter((zone) => zone.issues.length >= 3)
+  }, [validIssues])
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setIsContainerReady(true)
+    }
+  }, [])
+
   const upvote = async (issue) => {
     setOptimisticVotes((prev) => ({ ...prev, [issue.id]: (prev[issue.id] ?? issue.upvotes ?? 0) + 1 }))
 
@@ -129,7 +141,17 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#070d1a]">
-      <div ref={containerRef} className="h-[500px] w-full" />
+      <div ref={containerRef} style={{ height: '500px', width: '100%' }}>
+        {isContainerReady ? (
+          <MapContainer
+            key="map"
+            validIssues={validIssues}
+            hotZones={hotZones}
+            onSelectIssue={onSelectIssue}
+            focusIssueId={focusIssueId}
+          />
+        ) : null}
+      </div>
 
       <aside
         className={`glass-card fixed right-0 top-0 z-[100] h-screen w-full max-w-[420px] overflow-y-auto border-l border-white/20 p-5 transition-transform duration-300 md:w-[420px] ${
