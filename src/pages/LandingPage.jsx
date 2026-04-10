@@ -1,6 +1,8 @@
 import Hero from '../components/Hero'
 import Navbar from '../components/Navbar'
 import StatsCounter from '../components/StatsCounter'
+import HowItWorks from '../components/HowItWorks'
+import Footer from '../components/Footer'
 
 function LandingPage({ onReportClick }) {
   return (
@@ -8,6 +10,8 @@ function LandingPage({ onReportClick }) {
       <Navbar />
       <Hero onReportClick={onReportClick} />
       <StatsCounter />
+      <HowItWorks />
+      <Footer />
     </main>
   )
 }

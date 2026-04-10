@@ -214,7 +214,8 @@ function DashboardPage({ navigate, autoOpenReport }) {
 
       <ReportIssueModal
         isOpen={reportOpen}
-        onClose={() => {
+        onClose={() => setReportOpen(false)}
+        onSubmitSuccess={() => {
           setReportOpen(false)
           navigate('/dashboard')
         }}
