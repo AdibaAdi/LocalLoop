@@ -1,15 +1,19 @@
-# LocalLoop 🚀
+# LocalLoop
 
-Hyper-local community issue reporting and resolution platform.
+LocalLoop is a full-stack-ready civic engagement web app scaffold built with **React + Vite + Tailwind CSS** on the frontend and **Firebase** integrations (Auth, Firestore, Storage, Cloud Messaging) in the client layer.
 
-## Features
-- AI-powered issue detection (Gemini Vision)
-- Auto complaint generation
-- Community voting + petitions
-- Real-time map clustering (Firebase + Maps API)
+## Setup
 
-## Tech Stack
-- React / Next.js
-- Firebase (Firestore)
-- Google Maps API
-- Gemini API
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy env template:
+   ```bash
+   cp .env.example .env
+   ```
+3. Fill in your Firebase credentials in `.env`.
+4. Start dev server:
+   ```bash
+   npm run dev
+   ```
