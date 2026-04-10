@@ -41,9 +41,15 @@ function IssueMap({ issues, selectedIssue, onSelectIssue }) {
     }).addTo(map)
     markersLayerRef.current = window.L.layerGroup().addTo(map)
     mapRef.current = map
+    setTimeout(() => map.invalidateSize(), 0)
 
     return () => map.remove()
   }, [])
+
+  useEffect(() => {
+    if (!mapRef.current) return
+    mapRef.current.invalidateSize()
+  }, [validIssues.length])
 
   useEffect(() => {
     if (!markersLayerRef.current || !window.L) return
@@ -94,7 +100,7 @@ function IssueMap({ issues, selectedIssue, onSelectIssue }) {
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#070d1a]">
-      <div ref={containerRef} className="h-[68vh] min-h-[520px] w-full" />
+      <div ref={containerRef} className="h-[500px] w-full" />
 
       {issue && (
         <aside className="glass-card absolute right-4 top-4 z-[500] max-h-[calc(100%-2rem)] w-[360px] overflow-y-auto rounded-3xl p-4">

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { collection, onSnapshot, query } from 'firebase/firestore'
+import { Timestamp, collection, doc, getDocs, limit, onSnapshot, query, setDoc } from 'firebase/firestore'
 import Navbar from '../components/Navbar'
 import ReportIssueModal from '../components/ReportIssueModal'
 import IssueMap from '../components/IssueMap'
@@ -28,6 +28,61 @@ function DashboardPage({ navigate, autoOpenReport }) {
   useEffect(() => {
     setReportOpen(autoOpenReport)
   }, [autoOpenReport])
+
+  useEffect(() => {
+    const seedReports = async () => {
+      const reportsRef = collection(db, 'reports')
+      const existing = await getDocs(query(reportsRef, limit(1)))
+      if (!existing.empty) return
+
+      const seedData = [
+        {
+          category: 'Pothole',
+          severity: 'Medium',
+          description: 'Large pothole near a school crosswalk causing cars to swerve into bike lane.',
+          ai_analysis: 'Road surface failure at a high-foot-traffic crossing. Recommend temporary cone marking and urgent resurfacing.',
+          ai_letter: 'Dear City Public Works,\nA large pothole has formed near the school crosswalk and is creating a safety risk for drivers and cyclists. Please prioritize an inspection and repair.\nThank you.',
+          upvotes: 8,
+          status: 'Open',
+          location: { lat: 40.715212, lng: -74.002415, address: 'Tribeca, Manhattan, New York, NY' },
+          timestamp: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
+        },
+        {
+          category: 'Broken Light',
+          severity: 'Critical',
+          description: 'Traffic signal stuck flashing red during rush hour at a major downtown intersection.',
+          ai_analysis: 'Signal timing failure at arterial intersection. Critical response needed due to collision risk and congestion.',
+          ai_letter: 'Dear Department of Transportation,\nThe traffic signal at this downtown intersection appears malfunctioning and is creating dangerous confusion during rush hour. Please dispatch maintenance as soon as possible.\nSincerely.',
+          upvotes: 15,
+          status: 'Escalated',
+          location: { lat: 40.712901, lng: -74.009623, address: 'Financial District, Manhattan, New York, NY' },
+          timestamp: Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000)),
+        },
+        {
+          category: 'Flooding',
+          severity: 'Low',
+          description: 'Recurring curbside pooling after rain, blocking pedestrian access ramp.',
+          ai_analysis: 'Localized drainage issue with moderate accessibility impact. Recommend catch basin cleaning.',
+          ai_letter: 'Dear Sanitation and Drainage Team,\nRainwater is repeatedly pooling at the curb and blocking access to the pedestrian ramp. Please inspect and clear nearby drains.\nRegards.',
+          upvotes: 4,
+          status: 'Resolved',
+          location: { lat: 40.719882, lng: -73.998441, address: 'Lower East Side, Manhattan, New York, NY' },
+          timestamp: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
+        },
+      ]
+
+      await Promise.all(
+        seedData.map(async (report) => {
+          const ref = doc(reportsRef)
+          await setDoc(ref, { id: ref.id, photo_base64: '', ...report })
+        })
+      )
+    }
+
+    seedReports().catch((error) => {
+      console.error('Failed to seed demo reports', error)
+    })
+  }, [])
 
   useEffect(() => {
     const reportsQuery = query(collection(db, 'reports'))
@@ -151,7 +206,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
 
 function FilterGroup({ label, values, current, onChange }) {
   return (
-    <div className="rounded-full border border-white/15 bg-white/5 px-2 py-2">
+    <div className="w-full rounded-2xl border border-white/15 bg-white/5 px-2 py-2 sm:w-auto">
       <p className="mb-2 px-2 text-[11px] uppercase tracking-[0.18em] text-white/50">{label}</p>
       <div className="flex flex-wrap gap-2">
         {values.map((value) => (

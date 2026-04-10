@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
@@ -36,6 +36,7 @@ function ReportIssueModal({ isOpen, onClose }) {
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [location, setLocation] = useState({ lat: null, lng: null, address: '' })
   const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisQueued, setAnalysisQueued] = useState(false)
   const [category, setCategory] = useState('Other')
   const [severity, setSeverity] = useState('Low')
   const [description, setDescription] = useState('')
@@ -76,6 +77,7 @@ function ReportIssueModal({ isOpen, onClose }) {
   const uploadFile = (file) => {
     if (!file || !file.type.startsWith('image/')) return
     if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setAnalysisQueued(false)
     setPhotoFile(file)
     setPreviewUrl(URL.createObjectURL(file))
 
@@ -84,8 +86,8 @@ function ReportIssueModal({ isOpen, onClose }) {
     reader.readAsDataURL(file)
   }
 
-  const runGeminiAnalysis = async () => {
-    if (!photoFile) return
+  const runGeminiAnalysis = useCallback(async () => {
+    if (!photoFile || !photoBase64 || analysisLoading) return
     const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
     if (!geminiApiKey) return
 
@@ -109,12 +111,18 @@ function ReportIssueModal({ isOpen, onClose }) {
       setSeverity(['Low', 'Medium', 'Critical'].includes(parsed.severity) ? parsed.severity : 'Medium')
       setDescription(parsed.description || '')
       setAiLetter(parsed.ai_letter || '')
+      setAnalysisQueued(true)
     } catch (error) {
       console.error(error)
     } finally {
       setAnalysisLoading(false)
     }
-  }
+  }, [analysisLoading, photoBase64, photoFile])
+
+  useEffect(() => {
+    if (!photoFile || !photoBase64 || analysisQueued) return
+    runGeminiAnalysis()
+  }, [photoFile, photoBase64, analysisQueued, runGeminiAnalysis])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -172,7 +180,16 @@ function ReportIssueModal({ isOpen, onClose }) {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-4">
-              <button type="button" onClick={() => fileInputRef.current?.click()} className="relative flex min-h-72 w-full items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-4 transition hover:bg-white/10">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  uploadFile(event.dataTransfer.files?.[0])
+                }}
+                onDragOver={(event) => event.preventDefault()}
+                className="relative flex min-h-72 w-full items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-4 transition hover:bg-white/10"
+              >
                 {previewUrl ? <img src={previewUrl} alt="Issue preview" className="h-full max-h-96 w-full rounded-xl object-cover" /> : <div className="text-center"><p className="text-base font-medium text-white">Drag/drop or click image</p></div>}
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => uploadFile(event.target.files?.[0])} className="hidden" />
@@ -187,7 +204,9 @@ function ReportIssueModal({ isOpen, onClose }) {
               <div className="glass-card rounded-2xl p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">AI Analysis</p>
-                  <button type="button" disabled={!photoFile || analysisLoading} onClick={runGeminiAnalysis} className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-1.5 text-xs font-semibold text-civic-mist transition hover:bg-civic-electric/30 disabled:opacity-40">{analysisLoading ? 'Analyzing…' : 'Run analysis'}</button>
+                  <span className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-1.5 text-xs font-semibold text-civic-mist">
+                    {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto analysis enabled' : 'Upload image to start'}
+                  </span>
                 </div>
                 <div className="mt-4 space-y-3">
                   {analysisLoading ? skeleton : <><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">{category}</span><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[severity] || SEVERITY_STYLES.Medium}`}>{severity}</span></div><TypewriterText text={aiLetter || 'Run AI analysis to auto-generate the complaint letter.'} /></>}

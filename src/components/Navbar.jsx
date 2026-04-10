@@ -20,7 +20,9 @@ function Navbar() {
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-civic-electric/80 shadow-glow" />
-          <span className="text-lg font-semibold tracking-tight text-white">LocalLoop</span>
+          <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-300 bg-clip-text text-lg font-semibold tracking-tight text-transparent">
+            LocalLoop
+          </span>
         </div>
 
         <button
