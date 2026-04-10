@@ -1,6 +1,6 @@
 function Hero({ onReportClick }) {
   return (
-    <section className="relative overflow-hidden px-6 pb-24 pt-20">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#0A0F1E] to-[#0D1B3E] px-6 pb-24 pt-20">
       <div className="hero-grid pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(circle_at_center,black_35%,transparent_85%)]" />
       <div className="hero-grid pointer-events-none absolute inset-0 animate-drift opacity-15" />
       <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-civic-electric/25 blur-3xl animate-pulseSoft" />
@@ -10,9 +10,13 @@ function Hero({ onReportClick }) {
         <h1 className="text-balance text-4xl font-semibold leading-tight text-white md:text-6xl">Your neighborhood. Your voice. <span className="text-civic-electric">Fixed.</span></h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-white/75">Report local issues, rally your neighbors, and help city teams resolve what matters most.</p>
 
-        <button type="button" onClick={onReportClick} className="mt-10 rounded-full bg-civic-electric px-8 py-3 text-base font-semibold text-white shadow-glow transition duration-300 hover:-translate-y-0.5 hover:brightness-110">
-          Report an Issue
-        </button>
+        <div className="relative mt-10 inline-flex">
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-blue-500/60 blur-2xl animate-ping" />
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-cyan-400/40 blur-xl animate-pulse" />
+          <button type="button" onClick={onReportClick} className="relative rounded-full bg-civic-electric px-8 py-3 text-base font-semibold text-white shadow-glow transition duration-300 hover:-translate-y-0.5 hover:brightness-110">
+            Report an Issue
+          </button>
+        </div>
       </div>
     </section>
   )
