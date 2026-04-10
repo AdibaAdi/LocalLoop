@@ -40,6 +40,16 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
     })
 
     const map = window.L.map(containerRef.current, { zoomControl: false }).setView([40.7128, -74.006], 12)
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          map.setView([coords.latitude, coords.longitude], 13)
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 10000 }
+      )
+    }
     window.L.control.zoom({ position: 'bottomright' }).addTo(map)
     window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,

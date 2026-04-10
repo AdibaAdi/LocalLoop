@@ -28,7 +28,7 @@ function TypewriterText({ text, speed = 12 }) {
   return <p className="whitespace-pre-line text-sm leading-relaxed text-white/80">{displayed}</p>
 }
 
-function ReportIssueModal({ isOpen, onClose }) {
+function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const fileInputRef = useRef(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
@@ -144,7 +144,7 @@ function ReportIssueModal({ isOpen, onClose }) {
         status: 'Open',
         timestamp: serverTimestamp(),
       })
-      onClose()
+      onSubmitSuccess?.()
     } catch (error) {
       console.error(error)
     } finally {
@@ -202,8 +202,9 @@ function ReportIssueModal({ isOpen, onClose }) {
 
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">AI Analysis</p>
+                  <span className="rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-[11px] font-semibold text-civic-mist">Powered by Gemini ✨</span>
                   <span className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-1.5 text-xs font-semibold text-civic-mist">
                     {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto analysis enabled' : 'Upload image to start'}
                   </span>
