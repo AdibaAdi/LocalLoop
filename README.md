@@ -17,3 +17,7 @@ LocalLoop is a full-stack-ready civic engagement web app scaffold built with **R
    ```bash
    npm run dev
    ```
+Testing
+
+    Built a production bundle with npm run build and the build completed successfully.
+    Ran static checks with npm run lint and lint succeeded.
