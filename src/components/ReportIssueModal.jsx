@@ -42,6 +42,8 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const [description, setDescription] = useState('')
   const [aiLetter, setAiLetter] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [toast, setToast] = useState('')
+  const [analysisMode, setAnalysisMode] = useState('auto')
 
   useEffect(() => {
     if (!isOpen) return
@@ -78,6 +80,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
     if (!file || !file.type.startsWith('image/')) return
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setAnalysisQueued(false)
+    setAnalysisMode('auto')
     setPhotoFile(file)
     setPreviewUrl(URL.createObjectURL(file))
 
@@ -89,7 +92,10 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const runGeminiAnalysis = useCallback(async () => {
     if (!photoFile || !photoBase64 || analysisLoading) return
     const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
-    if (!geminiApiKey) return
+    if (!geminiApiKey) {
+      setAnalysisMode('manual')
+      return
+    }
 
     setAnalysisLoading(true)
     try {
@@ -112,8 +118,10 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
       setDescription(parsed.description || '')
       setAiLetter(parsed.ai_letter || '')
       setAnalysisQueued(true)
+      setAnalysisMode('auto')
     } catch (error) {
-      console.error(error)
+      console.error('Gemini analysis failed:', error)
+      setAnalysisMode('manual')
     } finally {
       setAnalysisLoading(false)
     }
@@ -121,14 +129,47 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
 
   useEffect(() => {
     if (!photoFile || !photoBase64 || analysisQueued) return
-    runGeminiAnalysis()
+    const timer = setTimeout(() => {
+      runGeminiAnalysis()
+    }, 3000)
+    return () => clearTimeout(timer)
   }, [photoFile, photoBase64, analysisQueued, runGeminiAnalysis])
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(''), 2200)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!photoBase64 || !location.lat || !location.lng) return
+    const requiredFields = {
+      photoBase64,
+      lat: location.lat,
+      lng: location.lng,
+      address: location.address,
+      category,
+      severity,
+      description,
+    }
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([, value]) => !value)
+      .map(([key]) => key)
+
+    if (missingFields.length) {
+      console.error('Submit blocked: missing required fields', missingFields)
+      return
+    }
 
     setSubmitLoading(true)
+    console.info('Submitting report payload', {
+      category,
+      severity,
+      hasPhoto: Boolean(photoBase64),
+      location,
+      hasAiLetter: Boolean(aiLetter),
+    })
     try {
       const reportRef = doc(collection(db, 'reports'))
       await setDoc(reportRef, {
@@ -144,9 +185,10 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
         status: 'Open',
         timestamp: serverTimestamp(),
       })
-      onSubmitSuccess?.()
+      setToast('✅ Report submitted successfully!')
+      setTimeout(() => onSubmitSuccess?.(), 700)
     } catch (error) {
-      console.error(error)
+      console.error('Firestore submit failed:', error)
     } finally {
       setSubmitLoading(false)
     }
@@ -170,6 +212,11 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
       <div className="fixed inset-0 z-[9998] bg-civic-night/65 backdrop-blur-md" onClick={onClose} />
       <section className="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8">
         <form onSubmit={handleSubmit} className="glass-card relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border-white/20 p-6 md:p-8">
+          {toast ? (
+            <div className="mb-4 rounded-xl border border-emerald-300/30 bg-emerald-500/20 px-4 py-2 text-sm text-emerald-100">
+              {toast}
+            </div>
+          ) : null}
           <div className="mb-6 flex items-start justify-between gap-6">
             <div>
               <h2 className="text-2xl font-semibold text-white">Report an Issue</h2>
@@ -206,20 +253,33 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">AI Analysis</p>
                   <span className="rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-[11px] font-semibold text-civic-mist">Powered by Gemini ✨</span>
                   <span className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-1.5 text-xs font-semibold text-civic-mist">
-                    {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto analysis enabled' : 'Upload image to start'}
+                    {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto-runs in 3s after upload' : 'Upload image to start'}
                   </span>
                 </div>
                 <div className="mt-4 space-y-3">
-                  {analysisLoading ? skeleton : <><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">{category}</span><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[severity] || SEVERITY_STYLES.Medium}`}>{severity}</span></div><TypewriterText text={aiLetter || 'Run AI analysis to auto-generate the complaint letter.'} /></>}
+                  {analysisLoading ? skeleton : <><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">{category}</span><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[severity] || SEVERITY_STYLES.Medium}`}>{severity}</span><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${analysisMode === 'manual' ? 'border-amber-300/40 bg-amber-500/20 text-amber-100' : 'border-cyan-300/35 bg-cyan-500/20 text-cyan-100'}`}>{analysisMode === 'manual' ? 'Manual' : 'AI'}</span></div><TypewriterText text={aiLetter || 'Run AI analysis to auto-generate the full complaint letter.'} /></>}
                 </div>
               </div>
+
+              <label className="block">
+                <span className="text-xs uppercase tracking-[0.2em] text-white/50">Category</span>
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-white/20 bg-civic-night px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric"
+                >
+                  {CATEGORIES.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
 
               <label className="block">
                 <span className="text-xs uppercase tracking-[0.2em] text-white/50">Issue description</span>
                 <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric" placeholder="Describe what is happening and why it needs city attention." required />
               </label>
 
-              <button type="submit" disabled={submitLoading || !photoBase64 || !location.lat || !location.lng} className="w-full rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:opacity-50">{submitLoading ? 'Publishing report…' : 'Submit report'}</button>
+              <button type="submit" disabled={submitLoading || !photoBase64 || !location.lat || !location.lng} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:opacity-50">{submitLoading ? <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Publishing report…</> : 'Submit report'}</button>
             </div>
           </div>
         </form>

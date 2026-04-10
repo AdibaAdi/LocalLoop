@@ -7,7 +7,7 @@ const SEVERITY_COLORS = { Critical: '#ef4444', Medium: '#f97316', Low: '#22c55e'
 const markerHtml = (color) => `<div class="issue-pin" style="--marker:${color}"></div>`
 const hotZoneHtml = (count) => `<div class="hot-zone">🔥 Hot Zone <span>${count}</span></div>`
 
-function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
+function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIssueId }) {
   const mapRef = useRef(null)
   const containerRef = useRef(null)
   const markersLayerRef = useRef(null)
@@ -39,7 +39,7 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     })
 
-    const map = window.L.map(containerRef.current, { zoomControl: false }).setView([40.7128, -74.006], 12)
+    const map = window.L.map(containerRef.current, { zoomControl: false }).setView([41.8358, -87.6277], 14)
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -66,6 +66,19 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
     if (!mapRef.current) return
     mapRef.current.invalidateSize()
   }, [validIssues.length])
+
+  useEffect(() => {
+    if (!mapRef.current || !validIssues.length || !window.L) return
+    const bounds = window.L.latLngBounds(validIssues.map((issue) => [issue.location.lat, issue.location.lng]))
+    mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 })
+  }, [validIssues])
+
+  useEffect(() => {
+    if (!mapRef.current || !focusIssueId) return
+    const focusedIssue = validIssues.find((issue) => issue.id === focusIssueId)
+    if (!focusedIssue) return
+    mapRef.current.flyTo([focusedIssue.location.lat, focusedIssue.location.lng], 16, { duration: 0.6 })
+  }, [focusIssueId, validIssues])
 
   useEffect(() => {
     if (!markersLayerRef.current || !window.L) return
@@ -133,7 +146,7 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
               {issue.photo_base64 || issue.photo_url ? (
                 <img src={issue.photo_base64 || issue.photo_url} alt={issue.category} className="h-44 w-full object-cover" />
               ) : (
-                <div className="grid h-44 place-items-center text-sm text-white/50">No image</div>
+                <div className="grid h-44 place-items-center bg-slate-700/60 text-sm text-white/70">No image available</div>
               )}
             </div>
 
@@ -168,6 +181,13 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
               <p className="text-xs uppercase tracking-[0.2em] text-white/45">Auto-generated complaint letter</p>
               <p className="mt-1 whitespace-pre-line text-sm text-white/75">{issue.ai_letter || 'No letter available yet.'}</p>
             </div>
+
+            <p className="mt-3 text-xs text-white/45">
+              Reported:{' '}
+              {issue.timestamp?.toDate?.()
+                ? issue.timestamp.toDate().toLocaleString()
+                : 'Timestamp unavailable'}
+            </p>
           </>
         )}
       </aside>
