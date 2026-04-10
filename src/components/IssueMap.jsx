@@ -7,7 +7,7 @@ const SEVERITY_COLORS = { Critical: '#ef4444', Medium: '#f97316', Low: '#22c55e'
 const markerHtml = (color) => `<div class="issue-pin" style="--marker:${color}"></div>`
 const hotZoneHtml = (count) => `<div class="hot-zone">🔥 Hot Zone <span>${count}</span></div>`
 
-function IssueMap({ issues, selectedIssue, onSelectIssue }) {
+function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue }) {
   const mapRef = useRef(null)
   const containerRef = useRef(null)
   const markersLayerRef = useRef(null)
@@ -32,6 +32,12 @@ function IssueMap({ issues, selectedIssue, onSelectIssue }) {
 
   useEffect(() => {
     if (!containerRef.current || !window.L || mapRef.current) return
+
+    window.L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    })
 
     const map = window.L.map(containerRef.current, { zoomControl: false }).setView([40.7128, -74.006], 12)
     window.L.control.zoom({ position: 'bottomright' }).addTo(map)
@@ -102,49 +108,59 @@ function IssueMap({ issues, selectedIssue, onSelectIssue }) {
     <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#070d1a]">
       <div ref={containerRef} className="h-[500px] w-full" />
 
-      {issue && (
-        <aside className="glass-card absolute right-4 top-4 z-[500] max-h-[calc(100%-2rem)] w-[360px] overflow-y-auto rounded-3xl p-4">
-          <div className="overflow-hidden rounded-2xl border border-white/15 bg-black/30">
-            {issue.photo_base64 ? (
-              <img src={issue.photo_base64} alt={issue.category} className="h-44 w-full object-cover" />
-            ) : (
-              <div className="grid h-44 place-items-center text-sm text-white/50">No image</div>
-            )}
-          </div>
+      <aside
+        className={`glass-card fixed right-0 top-0 z-[100] h-screen w-full max-w-[420px] overflow-y-auto border-l border-white/20 p-5 transition-transform duration-300 md:w-[420px] ${
+          issue ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {issue && (
+          <>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-white">Issue details</h3>
+              <button type="button" onClick={onCloseIssue} className="text-white/60 transition hover:text-white">✕</button>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-white/15 bg-black/30">
+              {issue.photo_base64 || issue.photo_url ? (
+                <img src={issue.photo_base64 || issue.photo_url} alt={issue.category} className="h-44 w-full object-cover" />
+              ) : (
+                <div className="grid h-44 place-items-center text-sm text-white/50">No image</div>
+              )}
+            </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <span className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs">{issue.category}</span>
-            <span className="rounded-full px-2 py-1 text-xs" style={{ background: `${SEVERITY_COLORS[issue.severity]}33`, color: SEVERITY_COLORS[issue.severity] }}>
-              {issue.severity}
-            </span>
-            <span className="rounded-full border border-red-400/40 bg-red-500/20 px-2 py-1 text-xs text-red-100">
-              {String(issue.status).toLowerCase() === 'escalated' ? '🔥 Escalated' : issue.status || 'Open'}
-            </span>
-          </div>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs">{issue.category}</span>
+              <span className="rounded-full px-2 py-1 text-xs" style={{ background: `${SEVERITY_COLORS[issue.severity]}33`, color: SEVERITY_COLORS[issue.severity] }}>
+                {issue.severity}
+              </span>
+              <span className="rounded-full border border-red-400/40 bg-red-500/20 px-2 py-1 text-xs text-red-100">
+                {String(issue.status).toLowerCase() === 'escalated' ? '🔥 Escalated' : issue.status || 'Open'}
+              </span>
+            </div>
 
-          <p className="mt-3 text-sm text-white/85">{issue.description}</p>
-          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">AI analysis</p>
-          <p className="mt-1 text-sm text-white/75">{issue.ai_analysis || 'Assessment generated from user report and image context.'}</p>
+            <p className="mt-3 text-sm text-white/85">{issue.description}</p>
+            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">AI analysis</p>
+            <p className="mt-1 text-sm text-white/75">{issue.ai_analysis || 'Assessment generated from user report and image context.'}</p>
 
-          <button
-            type="button"
-            onClick={() => upvote(issue)}
-            className="mt-4 w-full rounded-xl bg-civic-electric px-3 py-2 text-sm font-semibold shadow-glow"
-          >
-            ⬆ Upvote ({optimisticVotes[issue.id] ?? issue.upvotes ?? 0})
-          </button>
+            <button
+              type="button"
+              onClick={() => upvote(issue)}
+              className="mt-4 w-full rounded-xl bg-civic-electric px-3 py-2 text-sm font-semibold shadow-glow"
+            >
+              ⬆ Upvote ({optimisticVotes[issue.id] ?? issue.upvotes ?? 0})
+            </button>
 
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/45">Status tracker</p>
-            <p className="mt-1 text-sm text-white/85">Current stage: {issue.status || 'Open'} {String(issue.status).toLowerCase() === 'escalated' ? '🔥' : ''}</p>
-          </div>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/45">Status tracker</p>
+              <p className="mt-1 text-sm text-white/85">Current stage: {issue.status || 'Open'} {String(issue.status).toLowerCase() === 'escalated' ? '🔥' : ''}</p>
+            </div>
 
-          <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/45">Auto-generated complaint letter</p>
-            <p className="mt-1 whitespace-pre-line text-sm text-white/75">{issue.ai_letter || 'No letter available yet.'}</p>
-          </div>
-        </aside>
-      )}
+            <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/45">Auto-generated complaint letter</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-white/75">{issue.ai_letter || 'No letter available yet.'}</p>
+            </div>
+          </>
+        )}
+      </aside>
     </section>
   )
 }

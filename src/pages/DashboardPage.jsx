@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Timestamp, collection, doc, getDocs, limit, onSnapshot, query, setDoc } from 'firebase/firestore'
+import { Timestamp, collection, doc, getDocs, limit, onSnapshot, query, setDoc, updateDoc } from 'firebase/firestore'
 import Navbar from '../components/Navbar'
 import ReportIssueModal from '../components/ReportIssueModal'
 import IssueMap from '../components/IssueMap'
@@ -33,7 +33,6 @@ function DashboardPage({ navigate, autoOpenReport }) {
     const seedReports = async () => {
       const reportsRef = collection(db, 'reports')
       const existing = await getDocs(query(reportsRef, limit(1)))
-      if (!existing.empty) return
 
       const seedData = [
         {
@@ -45,6 +44,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
           upvotes: 8,
           status: 'Open',
           location: { lat: 40.715212, lng: -74.002415, address: 'Tribeca, Manhattan, New York, NY' },
+          photo_url: 'https://picsum.photos/seed/pothole/400/300',
           timestamp: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
         },
         {
@@ -56,6 +56,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
           upvotes: 15,
           status: 'Escalated',
           location: { lat: 40.712901, lng: -74.009623, address: 'Financial District, Manhattan, New York, NY' },
+          photo_url: 'https://picsum.photos/seed/broken-light/400/300',
           timestamp: Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000)),
         },
         {
@@ -67,15 +68,32 @@ function DashboardPage({ navigate, autoOpenReport }) {
           upvotes: 4,
           status: 'Resolved',
           location: { lat: 40.719882, lng: -73.998441, address: 'Lower East Side, Manhattan, New York, NY' },
+          photo_url: 'https://picsum.photos/seed/flooding/400/300',
           timestamp: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
         },
       ]
 
+      if (existing.empty) {
+        await Promise.all(
+          seedData.map(async (report) => {
+            const ref = doc(reportsRef)
+            await setDoc(ref, { id: ref.id, photo_base64: '', photo_url: report.photo_url || '', ...report })
+          })
+        )
+      }
+
+      const allReports = await getDocs(query(reportsRef))
       await Promise.all(
-        seedData.map(async (report) => {
-          const ref = doc(reportsRef)
-          await setDoc(ref, { id: ref.id, photo_base64: '', ...report })
-        })
+        allReports.docs
+          .filter((docSnap) => {
+            const data = docSnap.data()
+            return !data.photo_base64 && !data.photo_url
+          })
+          .map((docSnap, index) =>
+            updateDoc(doc(db, 'reports', docSnap.id), {
+              photo_url: `https://picsum.photos/seed/backfill-${index + 1}/400/300`,
+            })
+          )
       )
     }
 
@@ -106,7 +124,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
   )
 
   const selectedIssue = useMemo(
-    () => filteredIssues.find((issue) => issue.id === selectedIssueId) || filteredIssues[0],
+    () => filteredIssues.find((issue) => issue.id === selectedIssueId) || null,
     [filteredIssues, selectedIssueId]
   )
 
@@ -176,6 +194,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
             issues={filteredIssues}
             selectedIssue={selectedIssue}
             onSelectIssue={(id) => setSelectedIssueId(id)}
+            onCloseIssue={() => setSelectedIssueId('')}
           />
 
           <aside className="glass-card rounded-3xl p-4">

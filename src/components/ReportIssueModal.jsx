@@ -167,8 +167,8 @@ function ReportIssueModal({ isOpen, onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-civic-night/65 backdrop-blur-md" onClick={onClose} />
-      <section className="fixed inset-0 z-[55] flex items-center justify-center px-4 py-8">
+      <div className="fixed inset-0 z-[9998] bg-civic-night/65 backdrop-blur-md" onClick={onClose} />
+      <section className="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8">
         <form onSubmit={handleSubmit} className="glass-card relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border-white/20 p-6 md:p-8">
           <div className="mb-6 flex items-start justify-between gap-6">
             <div>
