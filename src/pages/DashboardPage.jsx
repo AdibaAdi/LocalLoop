@@ -11,6 +11,31 @@ const FILTERS = {
   status: ['All', 'Open', 'Escalated', 'Resolved'],
 }
 
+const CATEGORY_NORMALIZATION = {
+  pothole: 'Pothole',
+  flooding: 'Flooding',
+  'broken light': 'Broken Light',
+  'broken-light': 'Broken Light',
+  graffiti: 'Graffiti',
+  'safety hazard': 'Safety Hazard',
+  'safety-hazard': 'Safety Hazard',
+  other: 'Other',
+}
+
+const normalizeCategory = (category) => {
+  if (!category) return 'Other'
+  const key = String(category).trim().toLowerCase()
+  return CATEGORY_NORMALIZATION[key] || category
+}
+
+const normalizeSeverity = (severity) => {
+  if (!severity) return 'Low'
+  const value = String(severity).trim().toLowerCase()
+  if (value === 'critical') return 'Critical'
+  if (value === 'medium') return 'Medium'
+  return 'Low'
+}
+
 const statusNorm = (status) => {
   if (!status) return 'Open'
   const value = String(status).toLowerCase()
@@ -32,48 +57,77 @@ function DashboardPage({ navigate, autoOpenReport }) {
   useEffect(() => {
     const seedReports = async () => {
       const reportsRef = collection(db, 'reports')
-      const existing = await getDocs(query(reportsRef, limit(1)))
+      const existing = await getDocs(query(reportsRef, limit(3)))
 
       const seedData = [
         {
           category: 'Pothole',
-          severity: 'Medium',
-          description: 'Large pothole near a school crosswalk causing cars to swerve into bike lane.',
-          ai_analysis: 'Road surface failure at a high-foot-traffic crossing. Recommend temporary cone marking and urgent resurfacing.',
-          ai_letter: 'Dear City Public Works,\nA large pothole has formed near the school crosswalk and is creating a safety risk for drivers and cyclists. Please prioritize an inspection and repair.\nThank you.',
-          upvotes: 8,
+          severity: 'Critical',
+          description: 'Deep pothole in the right lane causing sudden swerves near morning campus traffic.',
+          ai_analysis: 'Severe pavement failure along a high-use commuter corridor near campus.',
+          ai_letter:
+            'Dear Chicago Department of Transportation,\nA severe pothole on South State Street near IIT is forcing vehicles to swerve unexpectedly. Please prioritize immediate patching to prevent crashes and further road damage.\nSincerely,\nA concerned resident.',
+          upvotes: 18,
           status: 'Open',
-          location: { lat: 40.715212, lng: -74.002415, address: 'Tribeca, Manhattan, New York, NY' },
-          photo_url: 'https://picsum.photos/seed/pothole/400/300',
+          location: { lat: 41.83496, lng: -87.62712, address: '3410 S State St, Chicago, IL 60616' },
+          photo_url: 'https://picsum.photos/seed/1/400/300',
           timestamp: Timestamp.fromDate(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)),
+        },
+        {
+          category: 'Flooding',
+          severity: 'Medium',
+          description: 'Stormwater pooling blocks curb ramp after rain near student housing entrance.',
+          ai_analysis: 'Recurring drainage obstruction affecting pedestrian and wheelchair access.',
+          ai_letter:
+            'Dear Streets and Sanitation Department,\nPersistent flooding at the curb ramp near South Wabash Avenue is limiting safe pedestrian access after rainfall. Please inspect nearby drains and schedule cleaning.\nThank you.',
+          upvotes: 12,
+          status: 'Open',
+          location: { lat: 41.83718, lng: -87.62588, address: '3140 S Wabash Ave, Chicago, IL 60616' },
+          photo_url: 'https://picsum.photos/seed/2/400/300',
+          timestamp: Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000)),
         },
         {
           category: 'Broken Light',
           severity: 'Critical',
-          description: 'Traffic signal stuck flashing red during rush hour at a major downtown intersection.',
-          ai_analysis: 'Signal timing failure at arterial intersection. Critical response needed due to collision risk and congestion.',
-          ai_letter: 'Dear Department of Transportation,\nThe traffic signal at this downtown intersection appears malfunctioning and is creating dangerous confusion during rush hour. Please dispatch maintenance as soon as possible.\nSincerely.',
-          upvotes: 15,
+          description: 'Crosswalk signal not illuminating at night at busy pedestrian crossing.',
+          ai_analysis: 'Electrical outage for crossing control at high-footfall intersection.',
+          ai_letter:
+            'Dear Chicago Department of Transportation,\nThe pedestrian crossing signal at South Dearborn Street is not functioning at night, creating a major safety risk. Please dispatch an electrical crew urgently.\nRegards.',
+          upvotes: 20,
           status: 'Escalated',
-          location: { lat: 40.712901, lng: -74.009623, address: 'Financial District, Manhattan, New York, NY' },
-          photo_url: 'https://picsum.photos/seed/broken-light/400/300',
-          timestamp: Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000)),
+          location: { lat: 41.83614, lng: -87.62882, address: '3200 S Dearborn St, Chicago, IL 60616' },
+          photo_url: 'https://picsum.photos/seed/3/400/300',
+          timestamp: Timestamp.fromDate(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)),
         },
         {
-          category: 'Flooding',
+          category: 'Graffiti',
           severity: 'Low',
-          description: 'Recurring curbside pooling after rain, blocking pedestrian access ramp.',
-          ai_analysis: 'Localized drainage issue with moderate accessibility impact. Recommend catch basin cleaning.',
-          ai_letter: 'Dear Sanitation and Drainage Team,\nRainwater is repeatedly pooling at the curb and blocking access to the pedestrian ramp. Please inspect and clear nearby drains.\nRegards.',
-          upvotes: 4,
+          description: 'Fresh graffiti tags on retaining wall visible from main sidewalk.',
+          ai_analysis: 'Non-urgent but recurring vandalism requiring cleanup and monitoring.',
+          ai_letter:
+            'Dear Graffiti Blasters Team,\nThere is new graffiti on the retaining wall along South Federal Street near IIT. Please schedule removal to keep the corridor clean and welcoming.\nBest regards.',
+          upvotes: 7,
           status: 'Resolved',
-          location: { lat: 40.719882, lng: -73.998441, address: 'Lower East Side, Manhattan, New York, NY' },
-          photo_url: 'https://picsum.photos/seed/flooding/400/300',
+          location: { lat: 41.83396, lng: -87.62991, address: '3344 S Federal St, Chicago, IL 60616' },
+          photo_url: 'https://picsum.photos/seed/4/400/300',
           timestamp: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)),
+        },
+        {
+          category: 'Safety Hazard',
+          severity: 'Medium',
+          description: 'Exposed metal plate on sidewalk near bus stop creates tripping hazard.',
+          ai_analysis: 'Pedestrian trip hazard adjacent to transit stop; moderate injury risk.',
+          ai_letter:
+            'Dear CDOT Sidewalk Maintenance,\nAn exposed metal plate on the sidewalk at South Michigan Avenue near 35th Street is creating a tripping risk for pedestrians. Please secure and repair this section promptly.\nSincerely.',
+          upvotes: 9,
+          status: 'Open',
+          location: { lat: 41.83154, lng: -87.62389, address: '3500 S Michigan Ave, Chicago, IL 60653' },
+          photo_url: 'https://picsum.photos/seed/5/400/300',
+          timestamp: Timestamp.fromDate(new Date(Date.now() - 9 * 24 * 60 * 60 * 1000)),
         },
       ]
 
-      if (existing.empty) {
+      if (existing.size < 3) {
         await Promise.all(
           seedData.map(async (report) => {
             const ref = doc(reportsRef)
@@ -115,8 +169,8 @@ function DashboardPage({ navigate, autoOpenReport }) {
   const filteredIssues = useMemo(
     () =>
       issues.filter((issue) => {
-        const categoryPass = filters.category === 'All' || issue.category === filters.category
-        const severityPass = filters.severity === 'All' || issue.severity === filters.severity
+        const categoryPass = filters.category === 'All' || normalizeCategory(issue.category) === filters.category
+        const severityPass = filters.severity === 'All' || normalizeSeverity(issue.severity) === filters.severity
         const statusPass = filters.status === 'All' || statusNorm(issue.status) === filters.status
         return categoryPass && severityPass && statusPass
       }),
@@ -145,7 +199,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
 
     const [topNeighborhood = 'Unknown area'] = Object.entries(neighborhoodCounts).sort((a, b) => b[1] - a[1])[0] || []
 
-    const topUrgent = [...issues]
+    const topUrgent = [...filteredIssues]
       .filter((issue) => {
         const stamp = issue.timestamp?.toDate?.()
         return !stamp || stamp.getTime() >= weekAgo
@@ -154,7 +208,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
       .slice(0, 5)
 
     return { openTotal, resolvedThisWeek, topNeighborhood, topUrgent }
-  }, [issues])
+  }, [issues, filteredIssues])
 
   return (
     <main className="min-h-screen bg-civic-night text-white">
@@ -195,16 +249,23 @@ function DashboardPage({ navigate, autoOpenReport }) {
             selectedIssue={selectedIssue}
             onSelectIssue={(id) => setSelectedIssueId(id)}
             onCloseIssue={() => setSelectedIssueId('')}
+            focusIssueId={selectedIssueId}
           />
 
           <aside className="glass-card rounded-3xl p-4">
             <h3 className="text-sm uppercase tracking-[0.2em] text-white/60">Top 5 Most Urgent Issues This Week</h3>
             <ul className="mt-4 space-y-2">
               {stats.topUrgent.map((issue, index) => (
-                <li key={issue.id} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <li key={issue.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIssueId(issue.id)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:bg-white/10"
+                  >
                   <p className="text-xs text-white/55">#{index + 1} · {issue.category}</p>
                   <p className="mt-1 text-sm text-white/90">{issue.description || 'No description provided'}</p>
                   <p className="mt-1 text-xs text-civic-mist">⬆ {issue.upvotes || 0} upvotes</p>
+                  </button>
                 </li>
               ))}
             </ul>
