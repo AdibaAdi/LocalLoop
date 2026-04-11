@@ -44,6 +44,38 @@ const statusNorm = (status) => {
   return 'Open'
 }
 
+
+const CHICAGO_IIT_COORDS = [
+  { lat: 41.83496, lng: -87.62712, address: '3410 S State St, Chicago, IL 60616' },
+  { lat: 41.83718, lng: -87.62588, address: '3140 S Wabash Ave, Chicago, IL 60616' },
+  { lat: 41.83614, lng: -87.62882, address: '3200 S Dearborn St, Chicago, IL 60616' },
+  { lat: 41.83396, lng: -87.62991, address: '3344 S Federal St, Chicago, IL 60616' },
+  { lat: 41.83154, lng: -87.62389, address: '3500 S Michigan Ave, Chicago, IL 60653' },
+]
+
+const extractNeighborhood = (address = '') => {
+  if (!address) return 'Unknown area'
+  const parts = String(address).split(',').map((part) => part.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    return parts[1]
+  }
+
+  return parts[0] || 'Unknown area'
+}
+
+const isLegacyNycSeed = (location = {}) => {
+  const address = String(location.address || '').toLowerCase()
+  const lat = Number(location.lat)
+  const lng = Number(location.lng)
+
+  if (address.includes('new york') || address.includes('manhattan')) return true
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    return lat > 40.6 && lat < 40.95 && lng > -74.1 && lng < -73.7
+  }
+
+  return false
+}
+
 function DashboardPage({ navigate, autoOpenReport, user }) {
   const [issues, setIssues] = useState([])
   const [selectedIssueId, setSelectedIssueId] = useState('')
@@ -149,6 +181,17 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
             })
           )
       )
+
+      await Promise.all(
+        allReports.docs
+          .filter((docSnap) => isLegacyNycSeed(docSnap.data().location))
+          .map((docSnap, index) => {
+            const chicagoPoint = CHICAGO_IIT_COORDS[index % CHICAGO_IIT_COORDS.length]
+            return updateDoc(doc(db, 'reports', docSnap.id), {
+              location: chicagoPoint,
+            })
+          })
+      )
     }
 
     seedReports().catch((error) => {
@@ -185,14 +228,15 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
   const stats = useMemo(() => {
     const now = Date.now()
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000
-    const openTotal = issues.filter((item) => statusNorm(item.status) !== 'Resolved').length
+
+    const openTotal = issues.filter((item) => String(item.status || '').toLowerCase() === 'open').length
     const resolvedThisWeek = issues.filter((item) => {
       const stamp = item.timestamp?.toDate?.() || item.updatedAt?.toDate?.()
-      return statusNorm(item.status) === 'Resolved' && stamp && stamp.getTime() >= weekAgo
+      return String(item.status || '').toLowerCase() === 'resolved' && stamp && stamp.getTime() >= weekAgo
     }).length
 
     const neighborhoodCounts = issues.reduce((acc, issue) => {
-      const key = issue.location?.address?.split(',')?.slice(-3, -2)?.[0]?.trim() || 'Unknown area'
+      const key = extractNeighborhood(issue.location?.address)
       acc[key] = (acc[key] || 0) + 1
       return acc
     }, {})

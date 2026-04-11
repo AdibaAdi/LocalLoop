@@ -25,7 +25,7 @@ function MapContainer({ validIssues, hotZones, onSelectIssue, focusIssueId }) {
   useEffect(() => {
     if (!mapNodeRef.current || !window.L || mapRef.current) return
 
-    const map = window.L.map(mapNodeRef.current, { zoomControl: false }).setView([41.8358, -87.6277], 14)
+    const map = window.L.map(mapNodeRef.current, { zoomControl: false }).setView([41.8358, -87.6277], 13)
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
