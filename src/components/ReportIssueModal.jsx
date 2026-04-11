@@ -42,6 +42,8 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const [severity, setSeverity] = useState('Low')
   const [description, setDescription] = useState('')
   const [aiLetter, setAiLetter] = useState('')
+  const [suggestedTitle, setSuggestedTitle] = useState('')
+  const [showLetter, setShowLetter] = useState(false)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [toast, setToast] = useState('')
   const [analysisMode, setAnalysisMode] = useState('auto')
@@ -100,6 +102,9 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setAnalysisQueued(false)
     setAnalysisMode('auto')
+    setShowLetter(false)
+    setAiLetter('')
+    setSuggestedTitle('')
     setPhotoFile(file)
     setPreviewUrl(URL.createObjectURL(file))
 
@@ -125,7 +130,23 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: 'Classify issue, severity, concise description and formal city complaint letter as JSON.' }, { inline_data: { mime_type: photoFile.type, data: base64 } }] }],
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Analyze this image of a neighborhood issue. Return JSON only:
+{
+  "category": "one of [Pothole, Flooding, Broken Light, Graffiti, Safety Hazard, Other]",
+  "severity": "one of [Low, Medium, Critical]",
+  "summary": "one sentence description of the issue",
+  "complaint_letter": "a formal 3-paragraph complaint letter to the Chicago Department of Transportation or relevant city department",
+  "suggested_title": "a short 5-8 word title for this report"
+}`,
+                  },
+                  { inline_data: { mime_type: photoFile.type, data: base64 } },
+                ],
+              },
+            ],
             generationConfig: { responseMimeType: 'application/json' },
           }),
         }
@@ -134,8 +155,10 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
       const parsed = JSON.parse(data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}')
       setCategory(CATEGORIES.includes(parsed.category) ? parsed.category : 'Other')
       setSeverity(['Low', 'Medium', 'Critical'].includes(parsed.severity) ? parsed.severity : 'Medium')
-      setDescription(parsed.description || '')
-      setAiLetter(parsed.ai_letter || '')
+      setDescription(parsed.summary || '')
+      setAiLetter(parsed.complaint_letter || '')
+      setSuggestedTitle(parsed.suggested_title || '')
+      setShowLetter(true)
       setAnalysisQueued(true)
       setAnalysisMode('auto')
     } catch (error) {
@@ -150,7 +173,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
     if (!photoFile || !photoBase64 || analysisQueued) return
     const timer = setTimeout(() => {
       runGeminiAnalysis()
-    }, 3000)
+    }, 2000)
     return () => clearTimeout(timer)
   }, [photoFile, photoBase64, analysisQueued, runGeminiAnalysis])
 
@@ -162,7 +185,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    console.log("Submitting...")
+    console.log('Starting submit...')
 
     if (!photoBase64 || !description.trim()) {
       console.error('Submit blocked: photo and description are required')
@@ -171,13 +194,15 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
 
     setSubmitLoading(true)
 
-    const reportPayload = {
+    const reportData = {
       photo_url: photoBase64,
       location,
       category,
       severity,
       description: description.trim(),
       ai_letter: aiLetter,
+      complaint_letter: aiLetter,
+      suggested_title: suggestedTitle,
       upvotes: 0,
       status: 'open',
       timestamp: serverTimestamp(),
@@ -185,16 +210,18 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
       userName: auth.currentUser?.displayName || 'Anonymous',
     }
 
+    console.log('db:', db)
+    console.log('data:', reportData)
+
     try {
-      const reportRef = await addDoc(collection(db, 'reports'), reportPayload)
+      const reportRef = await addDoc(collection(db, 'reports'), reportData)
       await updateDoc(reportRef, { id: reportRef.id })
       setToast('✅ Report submitted successfully!')
       onSubmitSuccess?.()
       onClose?.()
     } catch (e) {
-      console.log("Error:", e)
-      console.log('Firestore addDoc failed:', e)
       console.error('Firestore addDoc failed:', e)
+      alert(e?.message || 'Failed to submit report')
     } finally {
       setSubmitLoading(false)
     }
@@ -273,11 +300,52 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">AI Analysis</p>
                   <span className="rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-[11px] font-semibold text-civic-mist">Powered by Gemini ✨</span>
                   <span className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-1.5 text-xs font-semibold text-civic-mist">
-                    {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto-runs in 3s after upload' : 'Upload image to start'}
+                    {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto-runs in 2s after upload' : 'Upload image to start'}
                   </span>
                 </div>
                 <div className="mt-4 space-y-3">
-                  {analysisLoading ? skeleton : <><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">{category}</span><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[severity] || SEVERITY_STYLES.Medium}`}>{severity}</span><span className={`rounded-full border px-3 py-1 text-xs font-semibold ${analysisMode === 'manual' ? 'border-amber-300/40 bg-amber-500/20 text-amber-100' : 'border-cyan-300/35 bg-cyan-500/20 text-cyan-100'}`}>{analysisMode === 'manual' ? 'Manual' : 'AI'}</span></div><TypewriterText text={aiLetter || 'Run AI analysis to auto-generate the full complaint letter.'} /></>}
+                  {analysisLoading ? (
+                    <div className="rounded-xl border border-civic-electric/35 bg-civic-electric/10 p-4 text-sm font-medium text-civic-mist">
+                      <p className="animate-pulse">🤖 Gemini is analyzing your photo<span className="inline-block w-8 animate-pulse">...</span></p>
+                      <div className="mt-3">{skeleton}</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">{category}</span>
+                        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[severity] || SEVERITY_STYLES.Medium}`}>{severity}</span>
+                        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${analysisMode === 'manual' ? 'border-amber-300/40 bg-amber-500/20 text-amber-100' : 'border-cyan-300/35 bg-cyan-500/20 text-cyan-100'}`}>{analysisMode === 'manual' ? 'Manual' : 'AI'}</span>
+                      </div>
+                      {suggestedTitle ? (
+                        <p className="text-sm text-white/80">
+                          <span className="text-white/55">Suggested title:</span> {suggestedTitle}
+                        </p>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setShowLetter((prev) => !prev)}
+                        className="text-left text-sm font-medium text-cyan-100 underline decoration-cyan-300/60 underline-offset-2"
+                      >
+                        📄 View AI-Generated Complaint Letter {showLetter ? '▲' : '▼'}
+                      </button>
+                      {showLetter ? (
+                        <div className="rounded-xl border border-white/20 bg-white/5 p-3">
+                          <TypewriterText text={aiLetter || 'Run AI analysis to auto-generate the full complaint letter.'} />
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAnalysisQueued(false)
+                          runGeminiAnalysis()
+                        }}
+                        disabled={!photoFile || !photoBase64 || analysisLoading}
+                        className="rounded-xl border border-civic-electric/40 bg-civic-electric/15 px-3 py-2 text-xs font-semibold text-civic-mist transition hover:bg-civic-electric/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        ✨ Regenerate
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
