@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import { addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { auth, db } from '../lib/firebase'
 
 const CATEGORIES = ['Pothole', 'Flooding', 'Broken Light', 'Graffiti', 'Safety Hazard', 'Other']
 
@@ -162,47 +162,37 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    const requiredFields = {
-      photoBase64,
-      description,
-    }
 
-    const missingFields = Object.entries(requiredFields)
-      .filter(([, value]) => !value)
-      .map(([key]) => key)
-
-    if (missingFields.length) {
-      console.error('Submit blocked: missing required fields', missingFields)
+    if (!photoBase64 || !description.trim()) {
+      console.error('Submit blocked: photo and description are required')
       return
     }
 
     setSubmitLoading(true)
-    console.info('Submitting report payload', {
+
+    const reportPayload = {
+      photo_url: photoBase64,
+      location,
       category,
       severity,
-      hasPhoto: Boolean(photoBase64),
-      location,
-      hasAiLetter: Boolean(aiLetter),
-    })
+      description: description.trim(),
+      ai_letter: aiLetter,
+      upvotes: 0,
+      status: 'open',
+      timestamp: serverTimestamp(),
+      userId: auth.currentUser?.uid || 'anonymous',
+      userName: auth.currentUser?.displayName || 'Anonymous',
+    }
+
     try {
-      const reportRef = doc(collection(db, 'reports'))
-      await setDoc(reportRef, {
-        id: reportRef.id,
-        photo_base64: photoBase64,
-        location,
-        category,
-        severity,
-        description,
-        ai_analysis: description,
-        ai_letter: aiLetter,
-        upvotes: 0,
-        status: 'Open',
-        timestamp: serverTimestamp(),
-      })
+      const reportRef = await addDoc(collection(db, 'reports'), reportPayload)
+      await updateDoc(reportRef, { id: reportRef.id })
       setToast('✅ Report submitted successfully!')
-      setTimeout(() => onSubmitSuccess?.(), 700)
+      onSubmitSuccess?.()
+      onClose?.()
     } catch (error) {
-      console.error('Firestore submit failed:', error)
+      console.log('Firestore addDoc failed:', error)
+      console.error('Firestore addDoc failed:', error)
     } finally {
       setSubmitLoading(false)
     }
@@ -307,7 +297,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
                 <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric" placeholder="Describe what is happening and why it needs city attention." required />
               </label>
 
-              <button type="submit" disabled={submitLoading || !description.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">{submitLoading ? <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Publishing report…</> : 'Submit report'}</button>
+              <button type="submit" disabled={submitLoading || !description.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">{submitLoading ? <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Saving report…</> : 'Submit report'}</button>
             </div>
           </div>
         </form>
