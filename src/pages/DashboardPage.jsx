@@ -44,7 +44,7 @@ const statusNorm = (status) => {
   return 'Open'
 }
 
-function DashboardPage({ navigate, autoOpenReport }) {
+function DashboardPage({ navigate, autoOpenReport, user }) {
   const [issues, setIssues] = useState([])
   const [selectedIssueId, setSelectedIssueId] = useState('')
   const [reportOpen, setReportOpen] = useState(autoOpenReport)
@@ -212,7 +212,7 @@ function DashboardPage({ navigate, autoOpenReport }) {
 
   return (
     <main className="min-h-screen bg-civic-night text-white">
-      <Navbar />
+      <Navbar user={user} navigate={navigate} />
 
       <section className="mx-auto max-w-[1400px] px-5 pb-8 pt-5">
         <div className="mb-5 grid gap-3 md:grid-cols-3">
