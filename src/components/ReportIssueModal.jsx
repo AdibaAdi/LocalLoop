@@ -162,6 +162,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    console.log("Submitting...")
 
     if (!photoBase64 || !description.trim()) {
       console.error('Submit blocked: photo and description are required')
@@ -190,9 +191,10 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
       setToast('✅ Report submitted successfully!')
       onSubmitSuccess?.()
       onClose?.()
-    } catch (error) {
-      console.log('Firestore addDoc failed:', error)
-      console.error('Firestore addDoc failed:', error)
+    } catch (e) {
+      console.log("Error:", e)
+      console.log('Firestore addDoc failed:', e)
+      console.error('Firestore addDoc failed:', e)
     } finally {
       setSubmitLoading(false)
     }
