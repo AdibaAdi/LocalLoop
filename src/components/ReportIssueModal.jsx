@@ -35,6 +35,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const [photoBase64, setPhotoBase64] = useState('')
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [location, setLocation] = useState({ lat: null, lng: null, address: '' })
+  const [locationFailed, setLocationFailed] = useState(false)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisQueued, setAnalysisQueued] = useState(false)
   const [category, setCategory] = useState('Other')
@@ -48,9 +49,21 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   useEffect(() => {
     if (!isOpen) return
 
+    const fallbackLocation = {
+      address: 'Location unavailable - enter manually',
+      lat: 0,
+      lng: 0,
+    }
+
     const fetchLocation = async () => {
-      if (!navigator.geolocation) return
       setLoadingLocation(true)
+      if (!navigator.geolocation) {
+        setLocation(fallbackLocation)
+        setLocationFailed(true)
+        setLoadingLocation(false)
+        return
+      }
+
       navigator.geolocation.getCurrentPosition(
         async ({ coords }) => {
           const lat = Number(coords.latitude.toFixed(6))
@@ -62,14 +75,20 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
             )
             const data = await response.json()
             setLocation({ lat, lng, address: data.display_name || `${lat}, ${lng}` })
+            setLocationFailed(false)
           } catch {
             setLocation({ lat, lng, address: `${lat}, ${lng}` })
+            setLocationFailed(false)
           } finally {
             setLoadingLocation(false)
           }
         },
-        () => setLoadingLocation(false),
-        { enableHighAccuracy: true, timeout: 12000 }
+        () => {
+          setLocation(fallbackLocation)
+          setLocationFailed(true)
+          setLoadingLocation(false)
+        },
+        { timeout: 10000, maximumAge: 60000 }
       )
     }
 
@@ -145,11 +164,6 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
     event.preventDefault()
     const requiredFields = {
       photoBase64,
-      lat: location.lat,
-      lng: location.lng,
-      address: location.address,
-      category,
-      severity,
       description,
     }
 
@@ -244,6 +258,20 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
               <div className="glass-card rounded-2xl p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/50">Detected location</p>
                 <p className="mt-2 text-sm text-white/80">{loadingLocation ? 'Detecting location...' : location.address || 'Unknown location'}</p>
+                {locationFailed ? (
+                  <input
+                    type="text"
+                    value={location.address}
+                    onChange={(event) =>
+                      setLocation((prev) => ({
+                        ...prev,
+                        address: event.target.value,
+                      }))
+                    }
+                    placeholder="Enter your address manually"
+                    className="mt-3 w-full rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-sm text-white outline-none transition focus:border-civic-electric"
+                  />
+                ) : null}
               </div>
             </div>
 
@@ -279,7 +307,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
                 <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric" placeholder="Describe what is happening and why it needs city attention." required />
               </label>
 
-              <button type="submit" disabled={submitLoading || !photoBase64 || !location.lat || !location.lng} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:opacity-50">{submitLoading ? <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Publishing report…</> : 'Submit report'}</button>
+              <button type="submit" disabled={submitLoading || !description.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">{submitLoading ? <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Publishing report…</> : 'Submit report'}</button>
             </div>
           </div>
         </form>
