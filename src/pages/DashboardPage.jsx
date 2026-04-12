@@ -76,6 +76,14 @@ const CHICAGO_IIT_COORDS = [
   { lat: 41.83154, lng: -87.62389, address: '3500 S Michigan Ave, Chicago, IL 60653' },
 ]
 
+const EMERGENCY_CONTACTS = [
+  { icon: '🚔', name: 'Police/Fire/Medical', detail: '911', href: 'tel:911' },
+  { icon: '🏙️', name: 'Chicago 311 (non-emergency city services)', detail: '311', href: 'tel:311' },
+  { icon: '🚧', name: 'CDOT Emergency', detail: '(312) 744-5000', href: 'tel:+13127445000' },
+  { icon: '💧', name: 'Water Emergency', detail: '(312) 744-7038', href: 'tel:+13127447038' },
+  { icon: '⚡', name: 'ComEd Outage', detail: '1-800-334-7661', href: 'tel:+18003347661' },
+]
+
 const extractNeighborhood = (address = '') => {
   if (!address) return 'Unknown area'
   const parts = String(address).split(',').map((part) => part.trim()).filter(Boolean)
@@ -107,6 +115,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
   const [locationQuery, setLocationQuery] = useState('')
   const [nearMeLoading, setNearMeLoading] = useState(false)
   const [activePanel, setActivePanel] = useState(null)
+  const [emergencyOpen, setEmergencyOpen] = useState(false)
 
   useEffect(() => {
     setReportOpen(autoOpenReport)
@@ -474,6 +483,61 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
           navigate('/dashboard')
         }}
       />
+
+      <button
+        type="button"
+        onClick={() => setEmergencyOpen(true)}
+        className="fixed bottom-6 right-6 z-[110] rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(239,68,68,0.65)] transition hover:bg-red-500 animate-pulse"
+      >
+        🚨 Emergency?
+      </button>
+
+      {emergencyOpen ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/65 px-4">
+          <div className="w-full max-w-2xl rounded-3xl border border-red-400/35 bg-[#0B170C] p-5 text-civic-mist shadow-[0_0_40px_rgba(239,68,68,0.35)] md:p-7">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white md:text-2xl">🚨 Is this an emergency?</h2>
+                <p className="mt-2 text-sm text-civic-mist/85">
+                  LocalLoop is for non-emergency reporting. For immediate dangers, contact:
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmergencyOpen(false)}
+                className="rounded-full border border-civic-mist/20 px-3 py-1 text-sm text-civic-mist/80 transition hover:border-civic-mist/45 hover:text-white"
+                aria-label="Close emergency contacts modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              {EMERGENCY_CONTACTS.map((contact) => (
+                <a
+                  key={contact.name}
+                  href={contact.href}
+                  className="rounded-2xl border border-red-300/25 bg-red-500/10 p-4 transition hover:bg-red-500/20"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {contact.icon} {contact.name}
+                      </p>
+                      <p className="mt-1 text-sm text-civic-mist">{contact.detail}</p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
+                      Call now
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+
+            <p className="mt-5 text-sm text-civic-mist/85">Not an emergency? Close this and submit your report below 👇</p>
+          </div>
+        </div>
+      ) : null}
 
       <aside
         className={`fixed right-0 top-0 z-[120] h-screen w-full max-w-[440px] overflow-y-auto border-l border-[#22C55E]/25 bg-[#0B170C]/95 p-5 backdrop-blur-md transition-transform duration-300 ${
