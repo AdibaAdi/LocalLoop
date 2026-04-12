@@ -284,7 +284,7 @@ Replace [ADDRESS] with the actual detected address and
     <>
       <div className="fixed inset-0 z-[9998] bg-civic-night/65 backdrop-blur-md" onClick={onClose} />
       <section className="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8">
-        <form onSubmit={handleSubmit} className="glass-card relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border-white/20 p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="glass-card relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border-[#22C55E]/25 p-6 md:p-8">
           {toast ? (
             <div className="mb-4 rounded-xl border border-emerald-300/30 bg-emerald-500/20 px-4 py-2 text-sm text-emerald-100">
               {toast}
@@ -293,9 +293,9 @@ Replace [ADDRESS] with the actual detected address and
           <div className="mb-6 flex items-start justify-between gap-6">
             <div>
               <h2 className="text-2xl font-semibold text-white">Report an Issue</h2>
-              <p className="mt-2 text-sm text-white/65">Upload a photo and let AI help draft your civic report.</p>
+              <p className="mt-2 text-sm text-civic-mist/75">Upload a photo and let AI help draft your civic report.</p>
             </div>
-            <button type="button" className="text-white/60 transition hover:text-white" onClick={onClose}>✕</button>
+            <button type="button" className="text-civic-mist/70 transition hover:text-civic-mist" onClick={onClose}>✕</button>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -308,15 +308,15 @@ Replace [ADDRESS] with the actual detected address and
                   uploadFile(event.dataTransfer.files?.[0])
                 }}
                 onDragOver={(event) => event.preventDefault()}
-                className="relative flex min-h-72 w-full items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-4 transition hover:bg-white/10"
+                className="relative flex min-h-72 w-full items-center justify-center rounded-2xl border border-dashed border-[#22C55E]/35 bg-[#132918] p-4 transition hover:bg-[#86EFAC]/15"
               >
                 {previewUrl ? <img src={previewUrl} alt="Issue preview" className="h-full max-h-96 w-full rounded-xl object-cover" /> : <div className="text-center"><p className="text-base font-medium text-white">Drag/drop or click image</p></div>}
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => uploadFile(event.target.files?.[0])} className="hidden" />
 
               <div className="glass-card rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/50">Detected location</p>
-                <p className="mt-2 text-sm text-white/80">{loadingLocation ? 'Detecting location...' : location.address || 'Unknown location'}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-civic-mist/65">Detected location</p>
+                <p className="mt-2 text-sm text-civic-mist/85">{loadingLocation ? 'Detecting location...' : location.address || 'Unknown location'}</p>
                 {locationFailed ? (
                   <input
                     type="text"
@@ -328,7 +328,7 @@ Replace [ADDRESS] with the actual detected address and
                       }))
                     }
                     placeholder="Enter your address manually"
-                    className="mt-3 w-full rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-sm text-white outline-none transition focus:border-civic-electric"
+                    className="mt-3 w-full rounded-xl border border-[#22C55E]/25 bg-[#132918] px-3 py-2 text-sm text-white outline-none transition focus:border-civic-electric"
                   />
                 ) : null}
               </div>
@@ -337,7 +337,7 @@ Replace [ADDRESS] with the actual detected address and
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">AI Analysis</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-civic-mist/65">AI Analysis</p>
                   <span className="rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-[11px] font-semibold text-civic-mist">Powered by Gemini ✨</span>
                   <span className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-1.5 text-xs font-semibold text-civic-mist">
                     {analysisLoading ? 'Analyzing…' : photoFile ? 'Auto-runs in 2s after upload' : 'Upload image to start'}
@@ -352,26 +352,26 @@ Replace [ADDRESS] with the actual detected address and
                   ) : (
                     <>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">{category}</span>
+                        <span className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-3 py-1 text-xs font-semibold text-civic-mist">{category}</span>
                         <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[severity] || SEVERITY_STYLES.Medium}`}>{severity}</span>
-                        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${analysisMode === 'manual' ? 'border-amber-300/40 bg-amber-500/20 text-amber-100' : 'border-cyan-300/35 bg-cyan-500/20 text-cyan-100'}`}>{analysisMode === 'manual' ? 'Manual' : 'AI'}</span>
+                        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${analysisMode === 'manual' ? 'border-amber-300/40 bg-amber-500/20 text-amber-100' : 'border-[#22C55E]/45 bg-[#22C55E]/20 text-civic-mist'}`}>{analysisMode === 'manual' ? 'Manual' : 'AI'}</span>
                       </div>
                       {suggestedTitle ? (
-                        <p className="text-sm text-white/80">
-                          <span className="text-white/55">Suggested title:</span> {suggestedTitle}
+                        <p className="text-sm text-civic-mist/85">
+                          <span className="text-civic-mist/70">Suggested title:</span> {suggestedTitle}
                         </p>
                       ) : null}
                       <button
                         type="button"
                         onClick={() => setShowLetter((prev) => !prev)}
-                        className="text-left text-sm font-medium text-cyan-100 underline decoration-cyan-300/60 underline-offset-2"
+                        className="text-left text-sm font-medium text-civic-mist underline decoration-[#22C55E]/60 underline-offset-2"
                       >
                         📄 View AI-Generated Complaint Letter {showLetter ? '▲' : '▼'}
                       </button>
                       {showLetter ? (
-                        <div className="space-y-2 rounded-xl border border-white/20 bg-white/5 p-3">
-                          <div className="max-h-64 overflow-y-auto rounded-lg border border-white/15 bg-black/10 p-3">
-                            <p className="whitespace-pre-line text-sm leading-relaxed text-white/85">
+                        <div className="space-y-2 rounded-xl border border-[#22C55E]/20 bg-[#132918] p-3">
+                          <div className="max-h-64 overflow-y-auto rounded-lg border border-[#22C55E]/15 bg-[#0D1F0F]/80 p-3">
+                            <p className="whitespace-pre-line text-sm leading-relaxed text-civic-mist/90">
                               {renderedLetter || 'Run AI analysis to auto-generate the full complaint letter.'}
                             </p>
                           </div>
@@ -386,7 +386,7 @@ Replace [ADDRESS] with the actual detected address and
                                 setToast('Unable to copy letter. Please copy manually.')
                               }
                             }}
-                            className="rounded-lg border border-cyan-300/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/30"
+                            className="rounded-lg border border-[#22C55E]/45 bg-[#22C55E]/20 px-3 py-1.5 text-xs font-semibold text-civic-mist transition hover:bg-[#86EFAC]/30"
                           >
                             📋 Copy Letter
                           </button>
@@ -409,11 +409,11 @@ Replace [ADDRESS] with the actual detected address and
               </div>
 
               <label className="block">
-                <span className="text-xs uppercase tracking-[0.2em] text-white/50">Category</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-civic-mist/65">Category</span>
                 <select
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-white/20 bg-civic-night px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric"
+                  className="mt-2 w-full rounded-2xl border border-[#22C55E]/25 bg-[#132918] px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric"
                 >
                   {CATEGORIES.map((item) => (
                     <option key={item} value={item}>{item}</option>
@@ -422,8 +422,8 @@ Replace [ADDRESS] with the actual detected address and
               </label>
 
               <label className="block">
-                <span className="text-xs uppercase tracking-[0.2em] text-white/50">Issue description</span>
-                <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric" placeholder="Describe what is happening and why it needs city attention." required />
+                <span className="text-xs uppercase tracking-[0.2em] text-civic-mist/65">Issue description</span>
+                <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} className="mt-2 w-full rounded-2xl border border-[#22C55E]/25 bg-[#132918] px-4 py-3 text-sm text-white outline-none transition focus:border-civic-electric" placeholder="Describe what is happening and why it needs city attention." required />
               </label>
 
               <button type="submit" disabled={submitLoading || !description.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-civic-electric px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">{submitLoading ? <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Saving report…</> : 'Submit report'}</button>

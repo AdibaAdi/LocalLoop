@@ -5,18 +5,18 @@ export default {
     extend: {
       colors: {
         civic: {
-          night: '#0A0F1E',
-          electric: '#3B82F6',
-          mist: '#E5F1FF',
+          night: '#0D1F0F',
+          electric: '#22C55E',
+          mist: '#D1FAE5',
         },
       },
       boxShadow: {
-        glow: '0 0 25px rgba(59, 130, 246, 0.45)',
-        glass: '0 20px 60px rgba(10, 15, 30, 0.45)',
+        glow: '0 0 25px rgba(34, 197, 94, 0.45)',
+        glass: '0 20px 60px rgba(6, 20, 10, 0.45)',
       },
       backgroundImage: {
         'city-grid':
-          'linear-gradient(rgba(59,130,246,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.18) 1px, transparent 1px)',
+          'linear-gradient(rgba(34,197,94,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.18) 1px, transparent 1px)',
       },
       keyframes: {
         drift: {

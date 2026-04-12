@@ -12,7 +12,7 @@ if (L?.Icon?.Default) {
   })
 }
 
-const SEVERITY_COLORS = { Critical: '#ef4444', Medium: '#f97316', Low: '#22c55e' }
+const SEVERITY_COLORS = { Critical: '#ef4444', Medium: '#f59e0b', Low: '#22c55e' }
 
 const markerHtml = (color) => `<div class="issue-pin" style="--marker:${color}"></div>`
 const hotZoneHtml = (count) => `<div class="hot-zone">🔥 Hot Zone <span>${count}</span></div>`
@@ -140,7 +140,7 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
   const issue = selectedIssue
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#070d1a]">
+    <section className="relative overflow-hidden rounded-3xl border border-[#22C55E]/20 bg-[#0D1F0F]">
       <div ref={containerRef} style={{ height: '500px', width: '100%' }}>
         {isContainerReady ? (
           <MapContainer
@@ -154,7 +154,7 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
       </div>
 
       <aside
-        className={`glass-card fixed right-0 top-0 z-[100] h-screen w-full max-w-[420px] overflow-y-auto border-l border-white/20 p-5 transition-transform duration-300 md:w-[420px] ${
+        className={`glass-card fixed right-0 top-0 z-[100] h-screen w-full max-w-[420px] overflow-y-auto border-l border-[#22C55E]/25 p-5 transition-transform duration-300 md:w-[420px] ${
           issue ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -162,18 +162,18 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
           <>
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-white">Issue details</h3>
-              <button type="button" onClick={onCloseIssue} className="text-white/60 transition hover:text-white">✕</button>
+              <button type="button" onClick={onCloseIssue} className="text-civic-mist/70 transition hover:text-civic-mist">✕</button>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-white/15 bg-black/30">
+            <div className="overflow-hidden rounded-2xl border border-[#22C55E]/25 bg-[#132918]">
               {issue.photo_base64 || issue.photo_url ? (
                 <img src={issue.photo_base64 || issue.photo_url} alt={issue.category} className="h-44 w-full object-cover" />
               ) : (
-                <div className="grid h-44 place-items-center bg-slate-700/60 text-sm text-white/70">No image available</div>
+                <div className="grid h-44 place-items-center bg-[#132918] text-sm text-civic-mist/70">No image available</div>
               )}
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs">{issue.category}</span>
+              <span className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-2 py-1 text-xs">{issue.category}</span>
               <span className="rounded-full px-2 py-1 text-xs" style={{ background: `${SEVERITY_COLORS[issue.severity]}33`, color: SEVERITY_COLORS[issue.severity] }}>
                 {issue.severity}
               </span>
@@ -182,9 +182,9 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
               </span>
             </div>
 
-            <p className="mt-3 text-sm text-white/85">{issue.description}</p>
-            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">AI analysis</p>
-            <p className="mt-1 text-sm text-white/75">{issue.ai_analysis || 'Assessment generated from user report and image context.'}</p>
+            <p className="mt-3 text-sm text-civic-mist/90">{issue.description}</p>
+            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-civic-mist/60">AI analysis</p>
+            <p className="mt-1 text-sm text-civic-mist/80">{issue.ai_analysis || 'Assessment generated from user report and image context.'}</p>
 
             <button
               type="button"
@@ -194,17 +194,17 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
               ⬆ Upvote ({optimisticVotes[issue.id] ?? issue.upvotes ?? 0})
             </button>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">Status tracker</p>
-              <p className="mt-1 text-sm text-white/85">Current stage: {issue.status || 'Open'} {String(issue.status).toLowerCase() === 'escalated' ? '🔥' : ''}</p>
+            <div className="mt-4 rounded-2xl border border-[#22C55E]/20 bg-[#132918] p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-civic-mist/60">Status tracker</p>
+              <p className="mt-1 text-sm text-civic-mist/90">Current stage: {issue.status || 'Open'} {String(issue.status).toLowerCase() === 'escalated' ? '🔥' : ''}</p>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">Auto-generated complaint letter</p>
-              <p className="mt-1 whitespace-pre-line text-sm text-white/75">{issue.ai_letter || 'No letter available yet.'}</p>
+            <div className="mt-3 rounded-2xl border border-[#22C55E]/20 bg-[#132918] p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-civic-mist/60">Auto-generated complaint letter</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-civic-mist/80">{issue.ai_letter || 'No letter available yet.'}</p>
             </div>
 
-            <p className="mt-3 text-xs text-white/45">
+            <p className="mt-3 text-xs text-civic-mist/60">
               Reported:{' '}
               {issue.timestamp?.toDate?.()
                 ? issue.timestamp.toDate().toLocaleString()

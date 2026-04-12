@@ -47,7 +47,7 @@ function Navbar({ user, navigate }) {
           <div className="h-9 w-9 rounded-lg bg-civic-electric/80 shadow-glow" />
           <Link
             to="/"
-            className="bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-300 bg-clip-text text-left text-lg font-semibold tracking-tight text-transparent"
+            className="bg-gradient-to-r from-green-300 via-emerald-300 to-green-200 bg-clip-text text-left text-lg font-semibold tracking-tight text-transparent"
           >
             LocalLoop
           </Link>
@@ -58,7 +58,7 @@ function Navbar({ user, navigate }) {
             <button
               type="button"
               onClick={() => navigate?.('/dashboard')}
-              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:bg-white/10"
+              className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-4 py-2 text-sm font-medium text-white/85 transition hover:bg-[#86EFAC]/15"
             >
               Dashboard
             </button>
@@ -68,7 +68,7 @@ function Navbar({ user, navigate }) {
             <button
               type="button"
               onClick={() => navigate?.('/my-reports')}
-              className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-2 text-sm font-medium text-civic-mist transition hover:bg-civic-electric/35"
+              className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-2 text-sm font-medium text-civic-mist transition hover:bg-[#86EFAC]/35"
             >
               My Reports
             </button>
@@ -82,7 +82,7 @@ function Navbar({ user, navigate }) {
                   event.stopPropagation()
                   setMenuOpen((prev) => !prev)
                 }}
-                className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1 pr-3 text-sm text-white"
+                className="flex items-center gap-2 rounded-full border border-[#22C55E]/30 bg-[#132918] px-2 py-1 pr-3 text-sm text-white"
               >
                 <img
                   src={user.photoURL || 'https://ui-avatars.com/api/?name=User'}
@@ -93,11 +93,11 @@ function Navbar({ user, navigate }) {
               </button>
 
               {menuOpen ? (
-                <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-xl border border-white/15 bg-civic-night shadow-2xl">
+                <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-xl border border-[#22C55E]/30 bg-[#132918] shadow-2xl">
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left text-sm text-white/90 transition hover:bg-white/10"
+                    className="w-full px-4 py-2 text-left text-sm text-white/90 transition hover:bg-[#86EFAC]/15"
                   >
                     Logout
                   </button>

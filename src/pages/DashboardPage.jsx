@@ -297,17 +297,17 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
           />
 
           <aside className="glass-card rounded-3xl p-4">
-            <h3 className="text-sm uppercase tracking-[0.2em] text-white/60">Top 5 Most Urgent Issues This Week</h3>
+            <h3 className="text-sm uppercase tracking-[0.2em] text-civic-mist/70">Top 5 Most Urgent Issues This Week</h3>
             <ul className="mt-4 space-y-2">
               {stats.topUrgent.map((issue, index) => (
                 <li key={issue.id}>
                   <button
                     type="button"
                     onClick={() => setSelectedIssueId(issue.id)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition hover:bg-white/10"
+                    className="w-full rounded-2xl border border-[#22C55E]/20 bg-[#132918] p-3 text-left transition hover:bg-[#86EFAC]/15"
                   >
-                  <p className="text-xs text-white/55">#{index + 1} · {issue.category}</p>
-                  <p className="mt-1 text-sm text-white/90">{issue.description || 'No description provided'}</p>
+                  <p className="text-xs text-civic-mist/70">#{index + 1} · {issue.category}</p>
+                  <p className="mt-1 text-sm text-civic-mist">{issue.description || 'No description provided'}</p>
                   <p className="mt-1 text-xs text-civic-mist">⬆ {issue.upvotes || 0} upvotes</p>
                   </button>
                 </li>
@@ -331,8 +331,8 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
 
 function FilterGroup({ label, values, current, onChange }) {
   return (
-    <div className="w-full rounded-2xl border border-white/15 bg-white/5 px-2 py-2 sm:w-auto">
-      <p className="mb-2 px-2 text-[11px] uppercase tracking-[0.18em] text-white/50">{label}</p>
+    <div className="w-full rounded-2xl border border-[#22C55E]/25 bg-[#132918] px-2 py-2 sm:w-auto">
+      <p className="mb-2 px-2 text-[11px] uppercase tracking-[0.18em] text-civic-mist/65">{label}</p>
       <div className="flex flex-wrap gap-2">
         {values.map((value) => (
           <button
@@ -342,7 +342,7 @@ function FilterGroup({ label, values, current, onChange }) {
             className={`rounded-full px-3 py-1 text-xs transition ${
               value === current
                 ? 'bg-civic-electric text-white shadow-glow'
-                : 'bg-white/10 text-white/70 hover:bg-white/20'
+                : 'bg-[#132918] text-civic-mist/85 hover:bg-[#86EFAC]/20'
             }`}
           >
             {value}
@@ -355,8 +355,8 @@ function FilterGroup({ label, values, current, onChange }) {
 
 function StatCard({ icon, label, value }) {
   return (
-    <article className="glass-card rounded-2xl border-cyan-300/20 p-4 shadow-glow">
-      <p className="text-xs uppercase tracking-[0.16em] text-white/55">{icon} {label}</p>
+    <article className="glass-card rounded-2xl border-[#22C55E]/30 p-4 shadow-glow">
+      <p className="text-xs uppercase tracking-[0.16em] text-civic-mist/70">{icon} {label}</p>
       <p className="mt-2 text-2xl font-semibold text-civic-mist">{value}</p>
     </article>
   )
