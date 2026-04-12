@@ -81,6 +81,8 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
   const [selectedIssueId, setSelectedIssueId] = useState('')
   const [reportOpen, setReportOpen] = useState(autoOpenReport)
   const [filters, setFilters] = useState({ category: 'All', severity: 'All', status: 'All' })
+  const [locationQuery, setLocationQuery] = useState('')
+  const [nearMeLoading, setNearMeLoading] = useState(false)
 
   useEffect(() => {
     setReportOpen(autoOpenReport)
@@ -215,9 +217,12 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
         const categoryPass = filters.category === 'All' || normalizeCategory(issue.category) === filters.category
         const severityPass = filters.severity === 'All' || normalizeSeverity(issue.severity) === filters.severity
         const statusPass = filters.status === 'All' || statusNorm(issue.status) === filters.status
-        return categoryPass && severityPass && statusPass
+        const normalizedAddress = String(issue.location?.address || '').toLowerCase()
+        const normalizedLocationQuery = locationQuery.trim().toLowerCase()
+        const locationPass = !normalizedLocationQuery || normalizedAddress.includes(normalizedLocationQuery)
+        return categoryPass && severityPass && statusPass && locationPass
       }),
-    [issues, filters]
+    [issues, filters, locationQuery]
   )
 
   const selectedIssue = useMemo(
@@ -254,6 +259,42 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
     return { openTotal, resolvedThisWeek, topNeighborhood, topUrgent }
   }, [issues, filteredIssues])
 
+  const handleNearMe = async () => {
+    if (!navigator.geolocation || nearMeLoading) return
+    setNearMeLoading(true)
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const lat = Number(coords.latitude.toFixed(6))
+        const lng = Number(coords.longitude.toFixed(6))
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+          )
+          const data = await response.json()
+          const detectedArea =
+            data?.address?.neighbourhood ||
+            data?.address?.suburb ||
+            data?.address?.quarter ||
+            data?.address?.postcode ||
+            data?.address?.city_district ||
+            ''
+          setLocationQuery(String(detectedArea || data?.display_name || '').trim())
+        } catch {
+          setLocationQuery('')
+        } finally {
+          setNearMeLoading(false)
+        }
+      },
+      () => {
+        setLocationQuery('')
+        setNearMeLoading(false)
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    )
+  }
+
   return (
     <main className="min-h-screen bg-civic-night text-white">
       <Navbar user={user} navigate={navigate} />
@@ -266,16 +307,48 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
         </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-3">
-            {Object.entries(FILTERS).map(([key, values]) => (
-              <FilterGroup
-                key={key}
-                label={key}
-                values={values}
-                current={filters[key]}
-                onChange={(value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={locationQuery}
+                onChange={(event) => setLocationQuery(event.target.value)}
+                placeholder="Search neighborhood or zip code..."
+                className="w-full max-w-md rounded-xl border border-[#22C55E]/25 bg-[#132918] px-3 py-2 text-sm text-civic-mist outline-none transition focus:border-civic-electric"
               />
-            ))}
+              <button
+                type="button"
+                onClick={handleNearMe}
+                disabled={nearMeLoading}
+                className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-4 py-2 text-xs font-semibold text-civic-mist transition hover:bg-[#86EFAC]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {nearMeLoading ? 'Locating…' : '📍 Near me'}
+              </button>
+              {locationQuery.trim() ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-xs text-civic-mist">
+                  Showing: {locationQuery.trim()}
+                  <button
+                    type="button"
+                    onClick={() => setLocationQuery('')}
+                    className="text-civic-mist/80 transition hover:text-white"
+                    aria-label="Clear location filter"
+                  >
+                    ×
+                  </button>
+                </span>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(FILTERS).map(([key, values]) => (
+                <FilterGroup
+                  key={key}
+                  label={key}
+                  values={values}
+                  current={filters[key]}
+                  onChange={(value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+                />
+              ))}
+            </div>
           </div>
 
           <button
