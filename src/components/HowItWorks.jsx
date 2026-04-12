@@ -18,7 +18,7 @@ function StepCard({ title, text, index }) {
       }`}
     >
       <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 text-sm text-civic-mist">{text}</p>
+      <p className="mt-3 text-sm text-[#D1D5DB]">{text}</p>
     </article>
   )
 }

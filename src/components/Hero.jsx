@@ -6,9 +6,9 @@ function Hero({ onReportClick }) {
       <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-civic-electric/25 blur-3xl animate-pulseSoft" />
 
       <div className="relative mx-auto max-w-4xl text-center">
-        <p className="mb-5 inline-flex rounded-full border border-civic-electric/50 bg-civic-electric/10 px-4 py-1 text-sm font-medium text-civic-mist">Built for safer, stronger communities</p>
+        <p className="mb-5 inline-flex rounded-full border border-civic-electric/50 bg-civic-electric/10 px-4 py-1 text-sm font-medium text-[#FFFFFF]">Built for safer, stronger communities</p>
         <h1 className="text-balance text-4xl font-semibold leading-tight text-white md:text-6xl">Your neighborhood. Your voice. <span className="text-civic-electric">Fixed.</span></h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-[#6B7280]">Report local issues, rally your neighbors, and help city teams resolve what matters most.</p>
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-[#E5E7EB]">Report local issues, rally your neighbors, and help city teams resolve what matters most.</p>
 
         <div className="relative mt-10 inline-flex">
           <span className="pointer-events-none absolute inset-0 rounded-full bg-civic-electric/45 blur-2xl" />
