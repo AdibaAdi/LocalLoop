@@ -5,9 +5,9 @@ export default {
     extend: {
       colors: {
         civic: {
-          night: '#0D1F0F',
+          night: '#0A0A0A',
           electric: '#22C55E',
-          mist: '#D1FAE5',
+          mist: '#6B7280',
         },
       },
       boxShadow: {

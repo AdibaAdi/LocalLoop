@@ -19,14 +19,14 @@ function StepCard({ icon, title, text, index }) {
     >
       <p className="text-3xl">{icon}</p>
       <h3 className="mt-4 text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm text-white/70">{text}</p>
+      <p className="mt-2 text-sm text-civic-mist">{text}</p>
     </article>
   )
 }
 
 function HowItWorks() {
   return (
-    <section className="px-6 pb-16">
+    <section className="bg-[#111811] px-6 pb-16 pt-2">
       <div className="mx-auto w-full max-w-5xl">
         <h2 className="text-center text-3xl font-semibold text-white md:text-4xl">How it Works</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
