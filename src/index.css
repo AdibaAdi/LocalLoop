@@ -16,8 +16,8 @@ body {
 
 .glass-card {
   @apply border backdrop-blur-xl shadow-glass;
-  border-color: rgba(34, 197, 94, 0.15);
-  background: #111811;
+  border-color: #2d4a2d;
+  background: #1a2e1a;
 }
 
 .hero-grid {
