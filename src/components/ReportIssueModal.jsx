@@ -10,6 +10,17 @@ const SEVERITY_STYLES = {
   Critical: 'bg-red-500/20 text-red-100 border-red-300/30',
 }
 
+const CHICAGO_NEIGHBORHOODS = [
+  { name: 'Hyde Park', lat: 41.7943, lng: -87.5907, address: 'Hyde Park, Chicago, IL' },
+  { name: 'Lincoln Park', lat: 41.9214, lng: -87.6513, address: 'Lincoln Park, Chicago, IL' },
+  { name: 'Wicker Park', lat: 41.9088, lng: -87.6795, address: 'Wicker Park, Chicago, IL' },
+  { name: 'Logan Square', lat: 41.9231, lng: -87.7093, address: 'Logan Square, Chicago, IL' },
+  { name: 'Pilsen', lat: 41.8561, lng: -87.6569, address: 'Pilsen, Chicago, IL' },
+  { name: 'Bronzeville', lat: 41.8316, lng: -87.6188, address: 'Bronzeville, Chicago, IL' },
+  { name: 'River North', lat: 41.8929, lng: -87.6341, address: 'River North, Chicago, IL' },
+  { name: 'Lakeview', lat: 41.9417, lng: -87.6533, address: 'Lakeview, Chicago, IL' },
+]
+
 function buildComplaintLetterTemplate(category, address, summary = '') {
   const safeAddress = address?.trim() || 'the reported location'
   const safeCategory = category?.trim() || 'infrastructure'
@@ -48,6 +59,8 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [location, setLocation] = useState({ lat: null, lng: null, address: '' })
   const [locationFailed, setLocationFailed] = useState(false)
+  const [manualLocationOpen, setManualLocationOpen] = useState(false)
+  const [manualLocationInput, setManualLocationInput] = useState('')
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisQueued, setAnalysisQueued] = useState(false)
   const [category, setCategory] = useState('Other')
@@ -94,9 +107,11 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
             )
             const data = await response.json()
             setLocation({ lat, lng, address: data.display_name || `${lat}, ${lng}` })
+            setManualLocationInput(data.display_name || `${lat}, ${lng}`)
             setLocationFailed(false)
           } catch {
             setLocation({ lat, lng, address: `${lat}, ${lng}` })
+            setManualLocationInput(`${lat}, ${lng}`)
             setLocationFailed(false)
           } finally {
             setLoadingLocation(false)
@@ -104,6 +119,8 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
         },
         () => {
           setLocation(fallbackLocation)
+          setManualLocationInput(fallbackLocation.address)
+          setManualLocationOpen(true)
           setLocationFailed(true)
           setLoadingLocation(false)
         },
@@ -112,6 +129,13 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
     }
 
     fetchLocation()
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setManualLocationOpen(false)
+      setManualLocationInput('')
+    }
   }, [isOpen])
 
   const uploadFile = (file) => {
@@ -317,19 +341,52 @@ Replace [ADDRESS] with the actual detected address and
               <div className="glass-card rounded-2xl p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-civic-mist/65">Detected location</p>
                 <p className="mt-2 text-sm text-civic-mist/85">{loadingLocation ? 'Detecting location...' : location.address || 'Unknown location'}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualLocationOpen((prev) => !prev)
+                    setManualLocationInput((prev) => prev || location.address || '')
+                  }}
+                  className="mt-3 rounded-full border border-[#22C55E]/30 bg-[#132918] px-3 py-1.5 text-xs font-semibold text-civic-mist transition hover:bg-[#86EFAC]/20"
+                >
+                  📍 Change location
+                </button>
                 {locationFailed ? (
-                  <input
-                    type="text"
-                    value={location.address}
-                    onChange={(event) =>
-                      setLocation((prev) => ({
-                        ...prev,
-                        address: event.target.value,
-                      }))
-                    }
-                    placeholder="Enter your address manually"
-                    className="mt-3 w-full rounded-xl border border-[#22C55E]/25 bg-[#132918] px-3 py-2 text-sm text-white outline-none transition focus:border-civic-electric"
-                  />
+                  <p className="mt-2 text-xs text-amber-200">Location access failed. Enter a Chicago area manually.</p>
+                ) : null}
+                {manualLocationOpen ? (
+                  <div className="mt-3 space-y-3">
+                    <input
+                      type="text"
+                      value={manualLocationInput}
+                      onChange={(event) => {
+                        const nextAddress = event.target.value
+                        setManualLocationInput(nextAddress)
+                        setLocation((prev) => ({ ...prev, address: nextAddress }))
+                      }}
+                      placeholder="Type Chicago address or neighborhood"
+                      className="w-full rounded-xl border border-[#22C55E]/25 bg-[#132918] px-3 py-2 text-sm text-white outline-none transition focus:border-civic-electric"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {CHICAGO_NEIGHBORHOODS.map((neighborhood) => (
+                        <button
+                          key={neighborhood.name}
+                          type="button"
+                          onClick={() => {
+                            setLocation({
+                              lat: neighborhood.lat,
+                              lng: neighborhood.lng,
+                              address: neighborhood.address,
+                            })
+                            setManualLocationInput(neighborhood.address)
+                          }}
+                          className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-3 py-1 text-xs text-civic-mist transition hover:bg-[#86EFAC]/20"
+                        >
+                          {neighborhood.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ) : null}
               </div>
             </div>
