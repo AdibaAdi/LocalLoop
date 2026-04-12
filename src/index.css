@@ -14,6 +14,20 @@ body {
   background-color: #0a0a0a;
 }
 
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.emergency-button {
+  z-index: 100000 !important;
+  position: fixed !important;
+}
+
+.emergency-modal-overlay {
+  z-index: 100000 !important;
+  position: fixed !important;
+}
+
 .glass-card {
   @apply border backdrop-blur-xl shadow-glass;
   border-color: #2d4a2d;

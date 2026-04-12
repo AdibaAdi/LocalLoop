@@ -496,14 +496,14 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
       <button
         type="button"
         onClick={() => setEmergencyOpen(true)}
-        className="fixed bottom-6 right-6 z-[110] rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(239,68,68,0.65)] transition hover:bg-red-500 animate-pulse"
-        style={{ zIndex: 9999, position: 'fixed' }}
+        className="emergency-button fixed bottom-6 right-6 z-[110] rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(239,68,68,0.65)] transition hover:bg-red-500 animate-pulse"
+        style={{ zIndex: 100000, position: 'fixed' }}
       >
         🚨 Emergency?
       </button>
 
       {emergencyOpen ? (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/65 px-4">
+        <div className="emergency-modal-overlay fixed inset-0 z-[140] flex items-center justify-center bg-black/65 px-4" style={{ zIndex: 100000, position: 'fixed' }}>
           <div className="w-full max-w-2xl rounded-3xl border border-red-400/35 bg-[#0B170C] p-5 text-[#D1D5DB] shadow-[0_0_40px_rgba(239,68,68,0.35)] md:p-7">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>

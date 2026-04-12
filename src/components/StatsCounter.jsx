@@ -9,7 +9,7 @@ const Stat = ({ label, value }) => {
       <p className="text-4xl font-bold tracking-tight text-civic-electric">
         {count.toLocaleString()}
       </p>
-      <p className="mt-2 text-sm uppercase tracking-[0.15em] text-civic-mist">{label}</p>
+      <p className="mt-2 text-sm uppercase tracking-[0.15em] text-[rgba(255,255,255,0.85)]">{label}</p>
     </article>
   )
 }
@@ -35,7 +35,7 @@ function StatsCounter() {
         <Stat value={634} label="resolved" />
         <Stat value={77} label="neighborhoods" />
       </div>
-      <p className="mx-auto mt-3 w-full max-w-5xl text-center text-xs text-civic-mist/70">
+      <p className="mx-auto mt-3 w-full max-w-5xl text-center text-xs text-[#9CA3AF]">
         Last updated: {minutesAgo} {minutesAgo === 1 ? 'minute' : 'minutes'} ago
       </p>
     </section>
