@@ -10,22 +10,34 @@ const SEVERITY_STYLES = {
   Critical: 'bg-red-500/20 text-red-100 border-red-300/30',
 }
 
-function TypewriterText({ text, speed = 12 }) {
-  const [displayed, setDisplayed] = useState('')
+function buildComplaintLetterTemplate(category, address, summary = '') {
+  const safeAddress = address?.trim() || 'the reported location'
+  const safeCategory = category?.trim() || 'infrastructure'
+  const detailSentence =
+    summary?.trim() ||
+    `The attached photo shows a ${safeCategory.toLowerCase()} issue that appears to be affecting this area and nearby residents.`
 
-  useEffect(() => {
-    setDisplayed('')
-    if (!text) return
-    let index = 0
-    const timer = setInterval(() => {
-      index += 1
-      setDisplayed(text.slice(0, index))
-      if (index >= text.length) clearInterval(timer)
-    }, speed)
-    return () => clearInterval(timer)
-  }, [text, speed])
+  return `Dear Chicago Department of Transportation,
 
-  return <p className="whitespace-pre-line text-sm leading-relaxed text-white/80">{displayed}</p>
+I am writing to report a serious infrastructure issue located at ${safeAddress} that requires immediate attention.
+
+${detailSentence}
+This issue poses a significant risk to public safety and requires prompt resolution. I kindly request that your department dispatch a maintenance team to assess and repair this issue at your earliest convenience.
+
+Thank you for your attention to this matter.
+
+Sincerely,
+Concerned Resident`
+}
+
+function normalizeGeminiText(rawText) {
+  if (!rawText) return '{}'
+
+  return String(rawText)
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .replace(/`/g, '')
+    .trim()
 }
 
 function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
@@ -47,6 +59,11 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [toast, setToast] = useState('')
   const [analysisMode, setAnalysisMode] = useState('auto')
+
+  const renderedLetter = useMemo(() => {
+    const sourceLetter = aiLetter || buildComplaintLetterTemplate(category, location.address, description)
+    return sourceLetter.replace(/\[ADDRESS\]/g, location.address || 'the reported location')
+  }, [aiLetter, category, description, location.address])
 
   useEffect(() => {
     if (!isOpen) return
@@ -134,14 +151,16 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
               {
                 parts: [
                   {
-                    text: `Analyze this image of a neighborhood issue. Return JSON only:
+                    text: `You are a civic reporting assistant. Analyze this image carefully.
+Respond with ONLY valid JSON, no markdown, no backticks, no explanation:
 {
-  "category": "one of [Pothole, Flooding, Broken Light, Graffiti, Safety Hazard, Other]",
-  "severity": "one of [Low, Medium, Critical]",
-  "summary": "one sentence description of the issue",
-  "complaint_letter": "a formal 3-paragraph complaint letter to the Chicago Department of Transportation or relevant city department",
-  "suggested_title": "a short 5-8 word title for this report"
-}`,
+  "category": "Pothole",
+  "severity": "Medium",
+  "summary": "Brief one sentence description of what you see",
+  "complaint_letter": "Dear Chicago Department of Transportation,\\n\\nI am writing to report a serious infrastructure issue located at [ADDRESS] that requires immediate attention.\\n\\n[DETAILED DESCRIPTION OF ISSUE FROM IMAGE - 2-3 sentences]\\n\\nThis issue poses a significant risk to public safety and requires prompt resolution. I kindly request that your department dispatch a maintenance team to assess and repair this issue at your earliest convenience.\\n\\nThank you for your attention to this matter.\\n\\nSincerely,\\nConcerned Resident"
+}
+Replace [ADDRESS] with the actual detected address and
+[DETAILED DESCRIPTION] with what Gemini actually sees in the image.`,
                   },
                   { inline_data: { mime_type: photoFile.type, data: base64 } },
                 ],
@@ -152,11 +171,32 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
         }
       )
       const data = await response.json()
-      const parsed = JSON.parse(data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}')
-      setCategory(CATEGORIES.includes(parsed.category) ? parsed.category : 'Other')
-      setSeverity(['Low', 'Medium', 'Critical'].includes(parsed.severity) ? parsed.severity : 'Medium')
-      setDescription(parsed.summary || '')
-      setAiLetter(parsed.complaint_letter || '')
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}'
+      const cleanedText = normalizeGeminiText(rawText)
+
+      let parsed = {}
+      let parseFailed = false
+
+      try {
+        parsed = JSON.parse(cleanedText)
+      } catch (parseError) {
+        console.warn('Gemini JSON parse failed, using fallback complaint letter:', parseError)
+        parseFailed = true
+      }
+
+      const parsedCategory = CATEGORIES.includes(parsed.category) ? parsed.category : 'Other'
+      const parsedSeverity = ['Low', 'Medium', 'Critical'].includes(parsed.severity) ? parsed.severity : 'Medium'
+      const parsedSummary = (parsed.summary || '').trim()
+      const parsedLetter = (parsed.complaint_letter || '').trim()
+
+      setCategory(parsedCategory)
+      setSeverity(parsedSeverity)
+      setDescription(parsedSummary)
+      setAiLetter(
+        parseFailed || !parsedLetter
+          ? buildComplaintLetterTemplate(parsedCategory, location.address, parsedSummary)
+          : parsedLetter
+      )
       setSuggestedTitle(parsed.suggested_title || '')
       setShowLetter(true)
       setAnalysisQueued(true)
@@ -167,7 +207,7 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
     } finally {
       setAnalysisLoading(false)
     }
-  }, [analysisLoading, photoBase64, photoFile])
+  }, [analysisLoading, location.address, photoBase64, photoFile])
 
   useEffect(() => {
     if (!photoFile || !photoBase64 || analysisQueued) return
@@ -329,8 +369,27 @@ function ReportIssueModal({ isOpen, onClose, onSubmitSuccess }) {
                         📄 View AI-Generated Complaint Letter {showLetter ? '▲' : '▼'}
                       </button>
                       {showLetter ? (
-                        <div className="rounded-xl border border-white/20 bg-white/5 p-3">
-                          <TypewriterText text={aiLetter || 'Run AI analysis to auto-generate the full complaint letter.'} />
+                        <div className="space-y-2 rounded-xl border border-white/20 bg-white/5 p-3">
+                          <div className="max-h-64 overflow-y-auto rounded-lg border border-white/15 bg-black/10 p-3">
+                            <p className="whitespace-pre-line text-sm leading-relaxed text-white/85">
+                              {renderedLetter || 'Run AI analysis to auto-generate the full complaint letter.'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(renderedLetter)
+                                setToast('📋 Complaint letter copied!')
+                              } catch (copyError) {
+                                console.error('Failed to copy letter:', copyError)
+                                setToast('Unable to copy letter. Please copy manually.')
+                              }
+                            }}
+                            className="rounded-lg border border-cyan-300/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/30"
+                          >
+                            📋 Copy Letter
+                          </button>
                         </div>
                       ) : null}
                       <button
