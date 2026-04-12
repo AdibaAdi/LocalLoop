@@ -4,11 +4,11 @@ const Stat = ({ label, value }) => {
   const { count, elementRef } = useCountUpOnView(value)
 
   return (
-    <article ref={elementRef} className="glass-card rounded-2xl px-8 py-7 text-center">
+    <article ref={elementRef} className="rounded-2xl border border-[rgba(34,197,94,0.15)] bg-[#1C1C1C] px-8 py-7 text-center shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
       <p className="text-4xl font-bold tracking-tight text-civic-electric">
         {count.toLocaleString()}
       </p>
-      <p className="mt-2 text-sm uppercase tracking-[0.15em] text-white/70">{label}</p>
+      <p className="mt-2 text-sm uppercase tracking-[0.15em] text-civic-mist">{label}</p>
     </article>
   )
 }

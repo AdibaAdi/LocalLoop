@@ -41,7 +41,7 @@ function Navbar({ user, navigate }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-civic-night/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-[rgba(34,197,94,0.2)] bg-[#0A0A0A]/95 backdrop-blur-xl">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-civic-electric/80 shadow-glow" />
@@ -58,7 +58,7 @@ function Navbar({ user, navigate }) {
             <button
               type="button"
               onClick={() => navigate?.('/dashboard')}
-              className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-4 py-2 text-sm font-medium text-white/85 transition hover:bg-[#86EFAC]/15"
+              className="rounded-full border border-[rgba(34,197,94,0.3)] bg-[#111811] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a261a]"
             >
               Dashboard
             </button>
@@ -68,7 +68,7 @@ function Navbar({ user, navigate }) {
             <button
               type="button"
               onClick={() => navigate?.('/my-reports')}
-              className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-2 text-sm font-medium text-civic-mist transition hover:bg-[#86EFAC]/35"
+              className="rounded-full border border-civic-electric/60 bg-civic-electric/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-civic-electric/35"
             >
               My Reports
             </button>
@@ -82,7 +82,7 @@ function Navbar({ user, navigate }) {
                   event.stopPropagation()
                   setMenuOpen((prev) => !prev)
                 }}
-                className="flex items-center gap-2 rounded-full border border-[#22C55E]/30 bg-[#132918] px-2 py-1 pr-3 text-sm text-white"
+                className="flex items-center gap-2 rounded-full border border-[rgba(34,197,94,0.3)] bg-[#111811] px-2 py-1 pr-3 text-sm text-white"
               >
                 <img
                   src={user.photoURL || 'https://ui-avatars.com/api/?name=User'}
@@ -93,11 +93,11 @@ function Navbar({ user, navigate }) {
               </button>
 
               {menuOpen ? (
-                <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-xl border border-[#22C55E]/30 bg-[#132918] shadow-2xl">
+                <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-xl border border-[rgba(34,197,94,0.3)] bg-[#111811] shadow-2xl">
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left text-sm text-white/90 transition hover:bg-[#86EFAC]/15"
+                    className="w-full px-4 py-2 text-left text-sm text-white/90 transition hover:bg-civic-electric/15"
                   >
                     Logout
                   </button>
