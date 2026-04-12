@@ -1,12 +1,12 @@
 import useFadeInOnView from '../hooks/useFadeInOnView'
 
 const STEPS = [
-  { icon: '📸', title: 'Snap', text: 'Take a photo of the issue and submit it in seconds.' },
-  { icon: '🤖', title: 'AI Analyzes', text: 'Gemini categorizes severity and drafts a clear report.' },
-  { icon: '🏛️', title: 'City Gets Notified', text: 'Your report is visible in the dashboard for civic action.' },
+  { title: 'Step 1', text: '📸 Spot an issue in your Chicago neighborhood' },
+  { title: 'Step 2', text: '🤖 Gemini AI analyzes and drafts your city report' },
+  { title: 'Step 3', text: '🏛️ Chicago city departments get notified automatically' },
 ]
 
-function StepCard({ icon, title, text, index }) {
+function StepCard({ title, text, index }) {
   const { elementRef, isVisible } = useFadeInOnView(0.25)
 
   return (
@@ -17,9 +17,8 @@ function StepCard({ icon, title, text, index }) {
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
       }`}
     >
-      <p className="text-3xl">{icon}</p>
-      <h3 className="mt-4 text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm text-civic-mist">{text}</p>
+      <h3 className="text-xl font-semibold text-white">{title}</h3>
+      <p className="mt-3 text-sm text-civic-mist">{text}</p>
     </article>
   )
 }

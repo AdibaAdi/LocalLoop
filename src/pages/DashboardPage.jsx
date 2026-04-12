@@ -110,6 +110,7 @@ const isLegacyNycSeed = (location = {}) => {
 function DashboardPage({ navigate, autoOpenReport, user }) {
   const [issues, setIssues] = useState([])
   const [selectedIssueId, setSelectedIssueId] = useState('')
+  const [mapFocusRequest, setMapFocusRequest] = useState({ issueId: '', nonce: 0 })
   const [reportOpen, setReportOpen] = useState(autoOpenReport)
   const [filters, setFilters] = useState({ category: 'All', severity: 'All', status: 'All' })
   const [locationQuery, setLocationQuery] = useState('')
@@ -355,6 +356,14 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
     )
   }
 
+  const focusIssueOnMap = (issueId, closePanel = false) => {
+    setSelectedIssueId(issueId)
+    setMapFocusRequest((prev) => ({ issueId, nonce: prev.nonce + 1 }))
+    if (closePanel) {
+      setActivePanel(null)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-civic-night text-white">
       <Navbar user={user} navigate={navigate} />
@@ -451,7 +460,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
             selectedIssue={selectedIssue}
             onSelectIssue={(id) => setSelectedIssueId(id)}
             onCloseIssue={() => setSelectedIssueId('')}
-            focusIssueId={selectedIssueId}
+            focusRequest={mapFocusRequest}
           />
 
           <aside className="glass-card rounded-3xl p-4">
@@ -461,7 +470,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
                 <li key={issue.id}>
                   <button
                     type="button"
-                    onClick={() => setSelectedIssueId(issue.id)}
+                    onClick={() => focusIssueOnMap(issue.id)}
                     className="w-full rounded-2xl border border-[#22C55E]/20 bg-[#132918] p-3 text-left transition hover:bg-[#86EFAC]/15"
                   >
                   <p className="text-xs text-civic-mist/70">#{index + 1} · {issue.category}</p>
@@ -576,8 +585,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedIssueId(issue.id)
-                    setActivePanel(null)
+                    focusIssueOnMap(issue.id, true)
                   }}
                   className="mt-3 w-full rounded-xl bg-civic-electric px-3 py-2 text-sm font-semibold shadow-glow transition hover:brightness-110"
                 >

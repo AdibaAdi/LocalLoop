@@ -17,7 +17,7 @@ const SEVERITY_COLORS = { Critical: '#ef4444', Medium: '#f59e0b', Low: '#22c55e'
 const markerHtml = (color) => `<div class="issue-pin" style="--marker:${color}"></div>`
 const hotZoneHtml = (count) => `<div class="hot-zone">🔥 Hot Zone <span>${count}</span></div>`
 
-function MapContainer({ validIssues, hotZones, onSelectIssue, focusIssueId }) {
+function MapContainer({ validIssues, hotZones, onSelectIssue, focusRequest }) {
   const mapRef = useRef(null)
   const mapNodeRef = useRef(null)
   const markersLayerRef = useRef(null)
@@ -55,11 +55,14 @@ function MapContainer({ validIssues, hotZones, onSelectIssue, focusIssueId }) {
   }, [validIssues])
 
   useEffect(() => {
-    if (!mapRef.current || !focusIssueId) return
-    const focusedIssue = validIssues.find((issue) => issue.id === focusIssueId)
+    if (!mapRef.current || !focusRequest?.issueId) return
+    const focusedIssue = validIssues.find((issue) => issue.id === focusRequest.issueId)
     if (!focusedIssue) return
-    mapRef.current.flyTo([focusedIssue.location.lat, focusedIssue.location.lng], 16, { duration: 0.6 })
-  }, [focusIssueId, validIssues])
+    mapRef.current.panTo([focusedIssue.location.lat, focusedIssue.location.lng], { animate: true, duration: 0.8 })
+    if (mapRef.current.getZoom() < 16) {
+      mapRef.current.setZoom(16, { animate: true })
+    }
+  }, [focusRequest, validIssues])
 
   useEffect(() => {
     if (!markersLayerRef.current || !window.L) return
@@ -87,7 +90,7 @@ function MapContainer({ validIssues, hotZones, onSelectIssue, focusIssueId }) {
   return <div ref={mapNodeRef} style={{ height: '100%', width: '100%' }} />
 }
 
-function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIssueId }) {
+function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusRequest }) {
   const containerRef = useRef(null)
   const [isContainerReady, setIsContainerReady] = useState(false)
   const [optimisticVotes, setOptimisticVotes] = useState({})
@@ -148,7 +151,7 @@ function IssueMap({ issues, selectedIssue, onSelectIssue, onCloseIssue, focusIss
             validIssues={validIssues}
             hotZones={hotZones}
             onSelectIssue={onSelectIssue}
-            focusIssueId={focusIssueId}
+            focusRequest={focusRequest}
           />
         ) : null}
       </div>
