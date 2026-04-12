@@ -408,18 +408,18 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
                 value={locationQuery}
                 onChange={(event) => setLocationQuery(event.target.value)}
                 placeholder="Search neighborhood or zip code..."
-                className="w-full max-w-md rounded-xl border border-[#22C55E]/25 bg-[#132918] px-3 py-2 text-sm text-civic-mist outline-none transition focus:border-civic-electric"
+                className="w-full max-w-md rounded-xl border border-[#2D4A2D] bg-[#1A2E1A] px-3 py-2 text-sm text-[#D1D5DB] outline-none transition focus:border-civic-electric"
               />
               <button
                 type="button"
                 onClick={handleNearMe}
                 disabled={nearMeLoading}
-                className="rounded-full border border-[#22C55E]/30 bg-[#132918] px-4 py-2 text-xs font-semibold text-civic-mist transition hover:bg-[#86EFAC]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-[#2D4A2D] bg-[#1A2E1A] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1E351E] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {nearMeLoading ? 'Locating…' : '📍 Near me'}
               </button>
               {locationQuery.trim() ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-xs text-civic-mist">
+                <span className="inline-flex items-center gap-2 rounded-full border border-civic-electric/40 bg-civic-electric/15 px-3 py-1 text-xs text-[#D1D5DB]">
                   Showing: {locationQuery.trim()}
                   <button
                     type="button"
@@ -463,19 +463,19 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
             focusRequest={mapFocusRequest}
           />
 
-          <aside className="glass-card rounded-3xl p-4">
-            <h3 className="text-sm uppercase tracking-[0.2em] text-civic-mist/70">Top 5 Most Urgent Issues This Week</h3>
+          <aside className="rounded-3xl border border-[#2D4A2D] bg-[#162316] p-4">
+            <h3 className="text-sm uppercase tracking-[0.2em] text-white">Top 5 Most Urgent Issues This Week</h3>
             <ul className="mt-4 space-y-2">
               {stats.topUrgent.map((issue, index) => (
                 <li key={issue.id}>
                   <button
                     type="button"
                     onClick={() => focusIssueOnMap(issue.id)}
-                    className="w-full rounded-2xl border border-[#22C55E]/20 bg-[#132918] p-3 text-left transition hover:bg-[#86EFAC]/15"
+                    className="w-full rounded-2xl border-l-4 border-l-[#22C55E] border-r border-t border-b border-[#2D4A2D] bg-[#162316] p-3 text-left transition hover:bg-[#1E351E]"
                   >
-                  <p className="text-xs text-civic-mist/70">#{index + 1} · {issue.category}</p>
-                  <p className="mt-1 text-sm text-civic-mist">{issue.description || 'No description provided'}</p>
-                  <p className="mt-1 text-xs text-civic-mist">⬆ {issue.upvotes || 0} upvotes</p>
+                  <p className="text-xs text-white">#{index + 1} · {issue.category}</p>
+                  <p className="mt-1 text-sm text-[#D1D5DB]">{issue.description || 'No description provided'}</p>
+                  <p className="mt-1 text-xs font-semibold text-[#22C55E]">⬆ {issue.upvotes || 0} upvotes</p>
                   </button>
                 </li>
               ))}
@@ -497,17 +497,18 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
         type="button"
         onClick={() => setEmergencyOpen(true)}
         className="fixed bottom-6 right-6 z-[110] rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(239,68,68,0.65)] transition hover:bg-red-500 animate-pulse"
+        style={{ zIndex: 9999, position: 'fixed' }}
       >
         🚨 Emergency?
       </button>
 
       {emergencyOpen ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/65 px-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-red-400/35 bg-[#0B170C] p-5 text-civic-mist shadow-[0_0_40px_rgba(239,68,68,0.35)] md:p-7">
+          <div className="w-full max-w-2xl rounded-3xl border border-red-400/35 bg-[#0B170C] p-5 text-[#D1D5DB] shadow-[0_0_40px_rgba(239,68,68,0.35)] md:p-7">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-white md:text-2xl">🚨 Is this an emergency?</h2>
-                <p className="mt-2 text-sm text-civic-mist/85">
+                <p className="mt-2 text-sm text-[#D1D5DB]">
                   LocalLoop is for non-emergency reporting. For immediate dangers, contact:
                 </p>
               </div>
@@ -533,7 +534,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
                       <p className="text-sm font-semibold text-white">
                         {contact.icon} {contact.name}
                       </p>
-                      <p className="mt-1 text-sm text-civic-mist">{contact.detail}</p>
+                      <p className="mt-1 text-sm text-[#D1D5DB]">{contact.detail}</p>
                     </div>
                     <span className="inline-flex items-center rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
                       Call now
@@ -543,7 +544,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
               ))}
             </div>
 
-            <p className="mt-5 text-sm text-civic-mist/85">Not an emergency? Close this and submit your report below 👇</p>
+            <p className="mt-5 text-sm text-[#D1D5DB]">Not an emergency? Close this and submit your report below 👇</p>
           </div>
         </div>
       ) : null}
@@ -572,13 +573,13 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
         {activePanel === 'open' ? (
           <div className="space-y-3">
             {openIssues.map((issue) => (
-              <article key={issue.id} className="rounded-2xl border border-[#22C55E]/25 bg-[#132918] p-3">
+              <article key={issue.id} className="rounded-2xl border border-[#2D4A2D] bg-[#1A2E1A] p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-[#22C55E]/30 bg-[#1A3420] px-2 py-1 text-xs">{normalizeCategory(issue.category)}</span>
+                  <span className="rounded-full border border-[#22C55E]/30 bg-[#1A3420] px-2 py-1 text-xs text-white">{normalizeCategory(issue.category)}</span>
                   <span className={`rounded-full px-2 py-1 text-xs ${SEVERITY_STYLES[normalizeSeverity(issue.severity)]}`}>{normalizeSeverity(issue.severity)}</span>
                 </div>
-                <p className="mt-2 text-sm text-civic-mist">{issue.location?.address || 'Address unavailable'}</p>
-                <div className="mt-3 flex items-center justify-between text-xs text-civic-mist/75">
+                <p className="mt-2 text-sm text-[#D1D5DB]">{issue.location?.address || 'Address unavailable'}</p>
+                <div className="mt-3 flex items-center justify-between text-xs text-[#D1D5DB]">
                   <span>⬆ {issue.upvotes || 0} upvotes</span>
                   <span>{timeAgo(issue)}</span>
                 </div>
@@ -600,7 +601,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
           <ul className="space-y-3">
             {resolvedIssuesThisWeek.map((issue) => (
               <li key={issue.id} className="rounded-2xl border border-emerald-300/30 bg-emerald-500/10 p-3">
-                <p className="text-sm text-civic-mist">
+                <p className="text-sm text-[#D1D5DB]">
                   ✅ <span className="font-medium">{normalizeCategory(issue.category)}</span> fixed at {issue.location?.address || 'Address unavailable'}
                 </p>
               </li>
@@ -621,9 +622,9 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
                     setLocationQuery(name)
                     setActivePanel(null)
                   }}
-                  className="w-full rounded-2xl border border-[#22C55E]/25 bg-[#132918] p-3 text-left transition hover:bg-[#86EFAC]/15"
+                  className="w-full rounded-2xl border border-[#2D4A2D] bg-[#1A2E1A] p-3 text-left transition hover:bg-[#1E351E]"
                 >
-                  <div className="mb-2 flex items-center justify-between text-sm text-civic-mist">
+                  <div className="mb-2 flex items-center justify-between text-sm text-[#D1D5DB]">
                     <span>{name}</span>
                     <span>{count}</span>
                   </div>
@@ -642,8 +643,8 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
 
 function FilterGroup({ label, values, current, onChange }) {
   return (
-    <div className="w-full rounded-2xl border border-[#22C55E]/25 bg-[#132918] px-2 py-2 sm:w-auto">
-      <p className="mb-2 px-2 text-[11px] uppercase tracking-[0.18em] text-civic-mist/65">{label}</p>
+    <div className="w-full rounded-2xl border border-[#2D4A2D] bg-[#1A2E1A] px-2 py-2 sm:w-auto">
+      <p className="mb-2 px-2 text-[11px] uppercase tracking-[0.18em] text-[#9CA3AF]">{label}</p>
       <div className="flex flex-wrap gap-2">
         {values.map((value) => (
           <button
@@ -652,8 +653,8 @@ function FilterGroup({ label, values, current, onChange }) {
             onClick={() => onChange(value)}
             className={`rounded-full px-3 py-1 text-xs transition ${
               value === current
-                ? 'bg-civic-electric text-white shadow-glow'
-                : 'bg-[#132918] text-civic-mist/85 hover:bg-[#86EFAC]/20'
+                ? 'bg-civic-electric text-black shadow-glow'
+                : 'bg-[#132918] text-white hover:bg-[#1E351E]'
             }`}
           >
             {value}
@@ -669,14 +670,14 @@ function StatCard({ icon, label, value, onClick, accent = 'default' }) {
     <button
       type="button"
       onClick={onClick}
-      className={`glass-card w-full rounded-2xl border p-4 text-left shadow-glow transition duration-200 ${
+      className={`w-full rounded-2xl border border-[#2D4A2D] bg-[#1A2E1A] p-4 text-left shadow-glow transition duration-200 ${
         accent === 'green'
-          ? 'border-[#22C55E]/30 hover:border-[#22C55E] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)]'
-          : 'border-[#22C55E]/30 hover:border-[#22C55E]/60'
+          ? 'hover:border-[#22C55E] hover:bg-[#1E351E] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)]'
+          : 'hover:border-[#22C55E]/60 hover:bg-[#1E351E]'
       }`}
     >
-      <p className="text-xs uppercase tracking-[0.16em] text-civic-mist/70">{icon} {label}</p>
-      <p className="mt-2 text-2xl font-semibold text-civic-mist">{value}</p>
+      <p className="text-xs uppercase tracking-[0.16em] text-[#9CA3AF]">{icon} {label}</p>
+      <p className="mt-2 text-2xl font-bold text-[#FFFFFF]">{value}</p>
     </button>
   )
 }
