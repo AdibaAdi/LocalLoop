@@ -44,6 +44,29 @@ const statusNorm = (status) => {
   return 'Open'
 }
 
+const SEVERITY_STYLES = {
+  Critical: 'bg-red-500/20 text-red-100 border border-red-400/40',
+  Medium: 'bg-amber-500/20 text-amber-100 border border-amber-300/40',
+  Low: 'bg-emerald-500/20 text-emerald-100 border border-emerald-300/40',
+}
+
+const toMillis = (issue) => {
+  const stamp = issue.timestamp?.toDate?.() || issue.updatedAt?.toDate?.()
+  return stamp?.getTime?.() || 0
+}
+
+const timeAgo = (issue) => {
+  const timestamp = toMillis(issue)
+  if (!timestamp) return 'Unknown time'
+  const diff = Math.max(0, Date.now() - timestamp)
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))}m ago`
+  if (diff < day) return `${Math.floor(diff / hour)}h ago`
+  return `${Math.floor(diff / day)}d ago`
+}
+
 
 const CHICAGO_IIT_COORDS = [
   { lat: 41.83496, lng: -87.62712, address: '3410 S State St, Chicago, IL 60616' },
@@ -83,6 +106,7 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
   const [filters, setFilters] = useState({ category: 'All', severity: 'All', status: 'All' })
   const [locationQuery, setLocationQuery] = useState('')
   const [nearMeLoading, setNearMeLoading] = useState(false)
+  const [activePanel, setActivePanel] = useState(null)
 
   useEffect(() => {
     setReportOpen(autoOpenReport)
@@ -259,6 +283,33 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
     return { openTotal, resolvedThisWeek, topNeighborhood, topUrgent }
   }, [issues, filteredIssues])
 
+  const openIssues = useMemo(
+    () => issues.filter((item) => String(item.status || '').toLowerCase() === 'open'),
+    [issues]
+  )
+
+  const resolvedIssuesThisWeek = useMemo(() => {
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+    return issues
+      .filter(
+        (item) =>
+          String(item.status || '').toLowerCase() === 'resolved' &&
+          toMillis(item) >= weekAgo
+      )
+      .sort((a, b) => toMillis(b) - toMillis(a))
+  }, [issues])
+
+  const topNeighborhoods = useMemo(() => {
+    const counts = issues.reduce((acc, issue) => {
+      const key = extractNeighborhood(issue.location?.address)
+      acc[key] = (acc[key] || 0) + 1
+      return acc
+    }, {})
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+  }, [issues])
+
   const handleNearMe = async () => {
     if (!navigator.geolocation || nearMeLoading) return
     setNearMeLoading(true)
@@ -301,9 +352,34 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
 
       <section className="mx-auto max-w-[1400px] px-5 pb-8 pt-5">
         <div className="mb-5 grid gap-3 md:grid-cols-3">
-          <StatCard icon="📂" label="Open Issues" value={stats.openTotal} />
-          <StatCard icon="✅" label="Resolved This Week" value={stats.resolvedThisWeek} />
-          <StatCard icon="📍" label="Most Affected Neighborhood" value={stats.topNeighborhood} />
+          <StatCard
+            icon="📂"
+            label="Open Issues"
+            value={stats.openTotal}
+            onClick={() => {
+              setSelectedIssueId('')
+              setActivePanel('open')
+            }}
+            accent="green"
+          />
+          <StatCard
+            icon="✅"
+            label="Resolved This Week"
+            value={stats.resolvedThisWeek}
+            onClick={() => {
+              setSelectedIssueId('')
+              setActivePanel('resolved')
+            }}
+          />
+          <StatCard
+            icon="📍"
+            label="Most Affected Neighborhood"
+            value={stats.topNeighborhood}
+            onClick={() => {
+              setSelectedIssueId('')
+              setActivePanel('neighborhoods')
+            }}
+          />
         </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
@@ -398,6 +474,96 @@ function DashboardPage({ navigate, autoOpenReport, user }) {
           navigate('/dashboard')
         }}
       />
+
+      <aside
+        className={`fixed right-0 top-0 z-[120] h-screen w-full max-w-[440px] overflow-y-auto border-l border-[#22C55E]/25 bg-[#0B170C]/95 p-5 backdrop-blur-md transition-transform duration-300 ${
+          activePanel ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">
+            {activePanel === 'open' && 'Open issues'}
+            {activePanel === 'resolved' && `${resolvedIssuesThisWeek.length} issues fixed this week!`}
+            {activePanel === 'neighborhoods' && 'Top 5 most affected neighborhoods'}
+          </h3>
+          <button
+            type="button"
+            onClick={() => setActivePanel(null)}
+            className="text-civic-mist/70 transition hover:text-civic-mist"
+            aria-label="Close panel"
+          >
+            ✕
+          </button>
+        </div>
+
+        {activePanel === 'open' ? (
+          <div className="space-y-3">
+            {openIssues.map((issue) => (
+              <article key={issue.id} className="rounded-2xl border border-[#22C55E]/25 bg-[#132918] p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-[#22C55E]/30 bg-[#1A3420] px-2 py-1 text-xs">{normalizeCategory(issue.category)}</span>
+                  <span className={`rounded-full px-2 py-1 text-xs ${SEVERITY_STYLES[normalizeSeverity(issue.severity)]}`}>{normalizeSeverity(issue.severity)}</span>
+                </div>
+                <p className="mt-2 text-sm text-civic-mist">{issue.location?.address || 'Address unavailable'}</p>
+                <div className="mt-3 flex items-center justify-between text-xs text-civic-mist/75">
+                  <span>⬆ {issue.upvotes || 0} upvotes</span>
+                  <span>{timeAgo(issue)}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedIssueId(issue.id)
+                    setActivePanel(null)
+                  }}
+                  className="mt-3 w-full rounded-xl bg-civic-electric px-3 py-2 text-sm font-semibold shadow-glow transition hover:brightness-110"
+                >
+                  View on map
+                </button>
+              </article>
+            ))}
+          </div>
+        ) : null}
+
+        {activePanel === 'resolved' ? (
+          <ul className="space-y-3">
+            {resolvedIssuesThisWeek.map((issue) => (
+              <li key={issue.id} className="rounded-2xl border border-emerald-300/30 bg-emerald-500/10 p-3">
+                <p className="text-sm text-civic-mist">
+                  ✅ <span className="font-medium">{normalizeCategory(issue.category)}</span> fixed at {issue.location?.address || 'Address unavailable'}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {activePanel === 'neighborhoods' ? (
+          <div className="space-y-3">
+            {topNeighborhoods.map(([name, count]) => {
+              const max = topNeighborhoods[0]?.[1] || 1
+              const width = Math.round((count / max) * 100)
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => {
+                    setLocationQuery(name)
+                    setActivePanel(null)
+                  }}
+                  className="w-full rounded-2xl border border-[#22C55E]/25 bg-[#132918] p-3 text-left transition hover:bg-[#86EFAC]/15"
+                >
+                  <div className="mb-2 flex items-center justify-between text-sm text-civic-mist">
+                    <span>{name}</span>
+                    <span>{count}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#0B170C]">
+                    <div className="h-full rounded-full bg-civic-electric transition-all duration-300" style={{ width: `${width}%` }} />
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
+      </aside>
     </main>
   )
 }
@@ -426,12 +592,20 @@ function FilterGroup({ label, values, current, onChange }) {
   )
 }
 
-function StatCard({ icon, label, value }) {
+function StatCard({ icon, label, value, onClick, accent = 'default' }) {
   return (
-    <article className="glass-card rounded-2xl border-[#22C55E]/30 p-4 shadow-glow">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`glass-card w-full rounded-2xl border p-4 text-left shadow-glow transition duration-200 ${
+        accent === 'green'
+          ? 'border-[#22C55E]/30 hover:border-[#22C55E] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)]'
+          : 'border-[#22C55E]/30 hover:border-[#22C55E]/60'
+      }`}
+    >
       <p className="text-xs uppercase tracking-[0.16em] text-civic-mist/70">{icon} {label}</p>
       <p className="mt-2 text-2xl font-semibold text-civic-mist">{value}</p>
-    </article>
+    </button>
   )
 }
 
